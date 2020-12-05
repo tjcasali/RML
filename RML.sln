@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RML", "RML\RML.csproj", "{961FC6C7-6A68-4672-B3DC-E77EF947457F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{961FC6C7-6A68-4672-B3DC-E77EF947457F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{961FC6C7-6A68-4672-B3DC-E77EF947457F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{961FC6C7-6A68-4672-B3DC-E77EF947457F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{961FC6C7-6A68-4672-B3DC-E77EF947457F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {10C95F3B-AF36-4B00-A18D-5C4C1A8E44ED}
+	EndGlobalSection
+EndGlobal

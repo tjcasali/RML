@@ -1,0 +1,40 @@
+﻿@model RML.ViewModels.RostersViewModel
+
+    <h2>@Model.Rosters.Count</h2>
+
+    <ul>
+        @foreach (var roster in Model.Rosters)
+        {
+            <li>@roster.RosterID</li>
+
+            <li>Team Ranking: @roster.TeamRankingAverage</li>
+            <li>QB Ranking: @roster.QBRankingAverage</li>
+            <li>RB Ranking: @roster.RBRankingAverage</li>
+            <li>WR Ranking: @roster.WRRankingAverage</li>
+            <li>TE Ranking: @roster.TERankingAverage</li>
+            foreach (var player in roster.PlayerNames)
+            {
+                <li>@player</li>
+            }
+        }
+    </ul>
+
+@*@model RML.ViewModels.DisplayLeagueViewModel
+
+<ul>
+    @foreach (var roster in Model.Rosters)
+    {
+        <li>@roster.RosterID</li>
+
+        <li>Team Ranking: @roster.TeamRankingAverage</li>
+        <li>QB Ranking: @roster.QBRankingAverage</li>
+        <li>RB Ranking: @roster.RBRankingAverage</li>
+        <li>WR Ranking: @roster.WRRankingAverage</li>
+        <li>TE Ranking: @roster.TERankingAverage</li>
+        foreach (var player in roster.PlayerNames)
+        {
+            <li>@player</li>
+
+        
+    }
+</ul>*@
