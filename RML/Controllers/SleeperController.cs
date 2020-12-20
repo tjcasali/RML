@@ -20,33 +20,36 @@ namespace RML.Controllers
         public List<SleeperUsers> sleeperUsers = new List<SleeperUsers>();
         public List<Rosters> sleeperRosters = new List<Rosters>();
         public Dictionary<string, PlayerData> playerList = new Dictionary<string, PlayerData>();
-
+        public List<KeepTradeCut> keepTradeCutList = new List<KeepTradeCut>();
 
         // GET: Sleeper
         public ActionResult Index()
         {
             return View();
         }
+
         public async Task<ActionResult> DisplayLeague(UserInfo user)
         {
             sleeperUsers = await GetUsers(user);
             sleeperRosters = await GetRosters(user);
-            playerList = await GetPlayers();
-
+            playerList = GetPlayers();
             LinkUsersAndRosters(sleeperUsers, sleeperRosters);
 
-            AddPlayerNamesToRosters(sleeperRosters, playerList);
+            //LoadSleeperPlayersTextFile();
 
-            LoadRankings(playerList);
+            //keepTradeCutList = ScrapeRankings(playerList);
+
+            playerList = LoadRankings(playerList, keepTradeCutList);
 
             sleeperRosters = AverageTeamRanking(sleeperRosters, playerList);
 
-            foreach(var p in playerList)
-            {
-                System.Diagnostics.Debug.WriteLine(p.Value.FirstName + " " + p.Value.LastName + p.Value.TradeValueChart);
-            }
+            AddPlayerNamesToRosters(sleeperRosters, playerList);
 
-            var viewModel = new RostersViewModel
+            sleeperRosters = RankPositionGroups(sleeperRosters);
+
+            sleeperRosters = SortRostersByRanking(sleeperRosters);
+
+            var viewModel = new DisplayLeagueViewModel
             {
                 Rosters = sleeperRosters
             };
@@ -54,6 +57,7 @@ namespace RML.Controllers
             return View(viewModel);
         }
 
+        #region Get Rosters/Users/Players
         public async Task<List<Rosters>> GetRosters(UserInfo user)
         {
 
@@ -92,7 +96,7 @@ namespace RML.Controllers
 
         }
 
-        public async Task<Dictionary<string, PlayerData>> GetPlayers()
+        public async void LoadSleeperPlayersTextFile()
         {
             HttpClient client = new HttpClient();
             HttpResponseMessage response = await
@@ -100,12 +104,19 @@ namespace RML.Controllers
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
-            Dictionary<string, PlayerData> playerList = JsonConvert.DeserializeObject<Dictionary<string, PlayerData>>(responseBody);
+            System.IO.File.WriteAllText(@"C:\Users\timca\source\repos\RML\RML\Data\SleeperGetPlayers.txt", responseBody);
+        }
 
+        public Dictionary<string, PlayerData> GetPlayers()
+        {
+            string json = System.IO.File.ReadAllText(@"C:\Users\timca\source\repos\RML\RML\Data\SleeperGetPlayers.txt");
+            Dictionary<string, PlayerData> playerList = JsonConvert.DeserializeObject<Dictionary<string, PlayerData>>(json);
 
             return playerList;
         }
+        #endregion
 
+        #region Add Owner IDs and Player Values to Rosters
         public void LinkUsersAndRosters(List<SleeperUsers> users, List<Rosters> rosters)
         {
             foreach (Rosters ros in rosters)
@@ -115,7 +126,7 @@ namespace RML.Controllers
                     if (su.UserID == ros.OwnerID)
                     {
                         su.RosterID = ros.RosterID;
-                        System.Diagnostics.Debug.WriteLine("Roster ID: " + su.RosterID + " Username: " + su.DisplayName);
+                        ros.DisplayName = su.DisplayName;
                     }
                 }
             }
@@ -123,79 +134,55 @@ namespace RML.Controllers
 
         public void AddPlayerNamesToRosters(List<Rosters> rosters, Dictionary<string, PlayerData> players)
         {
-            List<string> tempPlayersList = new List<string>();
+            List<string> tempPlayersList;
+            List<string> tempPlayerRankingsList;
+            Dictionary<string, POR> tempPORDict;
+            POR tempPOREntry;
             string temp = "";
+
+
+            PlayerData tempPlayer = new PlayerData();
 
             foreach (Rosters ros in rosters)
             {
                 tempPlayersList = new List<string>();
+                tempPlayerRankingsList = new List<string>();
+                tempPORDict = new Dictionary<string, POR>();
                 foreach (string p in ros.Bench)
                 {
-
+                    tempPOREntry = new POR();
                     temp = players[p].FirstName + " " + players[p].LastName;
+
+                    tempPlayer = GetPlayerData(p, players);
+                    tempPlayerRankingsList.Add(tempPlayer.KeepTradeCutValue);
+
                     tempPlayersList.Add(temp);
+
+                    tempPOREntry.PORName = temp;
+                    tempPOREntry.PORPosition = tempPlayer.Position;
+                    tempPOREntry.PORValue = Convert.ToInt32(tempPlayer.KeepTradeCutValue);
+
+                    tempPORDict.Add(p, tempPOREntry);
+                    //ros.PlayersOnRoster.Add(p, tempPOR);
+                    
+                    
                 }
                 ros.PlayerNames = tempPlayersList;
+                ros.PlayerTradeValues = tempPlayerRankingsList;
+                ros.PlayersOnRoster = tempPORDict;
             }
         }
+        #endregion
 
-        public void ScrapeRankings()
+        public Dictionary<string, PlayerData> LoadRankings(Dictionary<string, PlayerData> players, List<KeepTradeCut> ktc)
         {
-            //System.Diagnostics.Debug.WriteLine("Testing2..");
-            //string url = "https://www.fantasypros.com/nfl/rankings/dynasty-overall.php";
 
-            //HtmlAgilityPack.HtmlWeb web = new HtmlAgilityPack.HtmlWeb();
-            //HtmlAgilityPack.HtmlDocument doc = web.Load(url);
-
-            //var table = doc.DocumentNode.SelectSingleNode("//table[contains(@class,'table table-striped player-table table-hover js-table-caption')]");
-            //var rankings = doc.DocumentNode.SelectNodes("//*[@*[contains(., 'mpb-player-')]]");
-            //var table = doc.DocumentNode.SelectSingleNode("//table[@id='ranking-table']//tbody//tr");
-            //var table = doc.DocumentNode.SelectSingleNode("//table[@id='ranking-table']");
-
-            //System.Diagnostics.Debug.WriteLine(table.InnerHtml);
-            //System.Diagnostics.Debug.WriteLine(table.InnerText);
-
-            //foreach (HtmlNode col in doc.DocumentNode.SelectNodes("//table"))
-            //{
-            //    System.Diagnostics.Debug.WriteLine(col.InnerHtml);
-            //}
-
-            //string tempTest = "";
-            //string tempOverallRank = "";
-            //string tempPlayerName = "";
-            //string tempPositionRank = "";
-            //int counter = 0;
-
-            //		item.InnerText	"4\nEzekiel ElliottE. Elliott DAL \n \nRB3\n10\n243\n8\n5.2\n0.9\n"	string
-
-
-            //foreach (var row in table)
-            //{
-
-            //    //System.Diagnostics.Debug.WriteLine(row.InnerText);
-
-            //    //foreach(var col in row.SelectNodes("td"))
-            //    foreach (var col in row.InnerHtml)
-            //    {
-            //        tempOverallRank = row.SelectSingleNode("//td").InnerText;
-            //        System.Diagnostics.Debug.WriteLine("I am here: " + tempOverallRank);
-
-            //        //tempTest = (col.InnerText);
-            //        ////tempPlayerName = row.SelectSingleNode("//td").InnerText;
-            //        //System.Diagnostics.Debug.WriteLine(counter + " " + tempTest);
-            //        //counter++;
-            //    }
-            //    //System.Diagnostics.Debug.WriteLine(row.InnerText);
-            //}
-        }
-
-        public void LoadRankings(Dictionary<string, PlayerData> players)
-        {
-            using (var reader = new StreamReader("C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\Value_Scores_Full_Data_data.csv"))
+            using (var reader = new StreamReader("C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\KTCScrape.csv"))
             {
                 List<string> playerNameList = new List<string>();
                 List<string> playerPositionList = new List<string>();
-                List<string> playerTradeValueList = new List<string>();
+                List<string> playerTeamList = new List<string>();
+                List<string> playerKeepTradeCutList = new List<string>();
 
                 while (!reader.EndOfStream)
                 {
@@ -204,50 +191,33 @@ namespace RML.Controllers
 
                     playerNameList.Add(values[0]);
                     playerPositionList.Add(values[1]);
-                    playerTradeValueList.Add(values[9]);
+                    playerTeamList.Add(values[2]);
+                    playerKeepTradeCutList.Add(values[3]);
                 }
 
                 foreach (var p in players)
                 {
                     string temp = "";
+                    int tempIndex = 0;
+
                     string firstNameTemp = p.Value.FirstName.Replace(".", string.Empty);
                     string lastNameTemp = p.Value.LastName.Replace(".", string.Empty);
+
                     temp = '"' + firstNameTemp + " " + lastNameTemp + '"';
                     temp = temp.Remove(0, 1);
                     temp = temp.Remove(temp.Length - 1, 1);
+
                     if (playerNameList.Contains(temp))
                     {
-                        int listIndex = playerNameList.IndexOf(temp);
-                        //string removeQuoteFromRankings = playerRankingList[listIndex];
-                        //removeQuoteFromRankings = removeQuoteFromRankings.Remove(0, 1);
-                        //removeQuoteFromRankings = removeQuoteFromRankings.Remove(removeQuoteFromRankings.Length - 1, 1);
-                        p.Value.TradeValueChart = playerTradeValueList[listIndex];
+                        tempIndex = playerNameList.IndexOf(temp);
+                        p.Value.KeepTradeCutValue = playerKeepTradeCutList[tempIndex];
                     }
 
                 }
+
+                return players;
             }
         }
-
-
-        //public void LoadTradeValueChart(Dictionary<string, PlayerData> players)
-        //{
-        //    using (var reader = new StreamReader("C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\Value_Scores_Full_Data_data.csv"))
-        //    {
-        //        while (!reader.EndOfStream)
-        //        {
-        //            var line = reader.ReadLine();
-        //            var values = line.Split(',');
-        //            string temp = values[0];
-        //            foreach(var player in players)
-        //            {
-        //                if(players.ContainsValue(temp))
-        //                {
-
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
 
         public List<Rosters> AverageTeamRanking(List<Rosters> rosters, Dictionary<string, PlayerData> players)
         {
@@ -267,59 +237,58 @@ namespace RML.Controllers
                     {
                         PlayerData currentPlayer = new PlayerData();
                         currentPlayer = GetPlayerData(playerID, players);
-                        if (currentPlayer.TradeValueChart != "")
+                        if (currentPlayer.KeepTradeCutValue != "")
                         {
-                            parseTemp = Convert.ToDouble(currentPlayer.TradeValueChart);
-                            System.Diagnostics.Debug.WriteLine("TESTING PLAYER: " + currentPlayer.FirstName + " " + currentPlayer.LastName + ": " + currentPlayer.TradeValueChart);
-                            //totalTemp = totalTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
-                            totalTemp = totalTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                            parseTemp = Convert.ToDouble(currentPlayer.KeepTradeCutValue);
+                            //System.Diagnostics.Debug.WriteLine("TESTING PLAYER: " + currentPlayer.FirstName + " " + currentPlayer.LastName + ": " + currentPlayer.KeepTradeCutValue);
+                            //totalTemp = totalTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
+                            totalTemp = totalTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                             
                             if (currentPlayer.Position.Contains("QB"))
                             {
-                                qbTemp = qbTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                                qbTemp = qbTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                                 qbCount++;
                             }
                             if (currentPlayer.Position.Contains("RB"))
                             {
-                                rbTemp = rbTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                                rbTemp = rbTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                                 rbCount++;
                             }
                             if (currentPlayer.Position.Contains("WR"))
                             {
-                                wrTemp = wrTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                                wrTemp = wrTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                                 wrCount++;
                             }
                             if (currentPlayer.Position.Contains("TE"))
                             {
-                                teTemp = teTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                                teTemp = teTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                                 teCount++;
                             }
                         }
                         else
                         {
-                            currentPlayer.FantasyProsRanking = "300";
-                            currentPlayer.TradeValueChart = "1.0";
-                            //System.Diagnostics.Debug.WriteLine("TESTING PLAYER: " + currentPlayer.FirstName + " " + currentPlayer.LastName + ": " + currentPlayer.TradeValueChart);
-                            totalTemp = totalTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                            currentPlayer.KeepTradeCutValue = "1.0";
+                            //System.Diagnostics.Debug.WriteLine("TESTING PLAYER: " + currentPlayer.FirstName + " " + currentPlayer.LastName + ": " + currentPlayer.KeepTradeCutValue);
+                            totalTemp = totalTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
 
                             if (currentPlayer.Position.Contains("QB"))
                             {
-                                qbTemp = qbTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                                qbTemp = qbTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                                 qbCount++;
                             }
                             if (currentPlayer.Position.Contains("RB"))
                             {
-                                rbTemp = rbTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                                rbTemp = rbTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                                 rbCount++;
                             }
                             if (currentPlayer.Position.Contains("WR"))
                             {
-                                wrTemp = wrTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                                wrTemp = wrTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                                 wrCount++;
                             }
                             if (currentPlayer.Position.Contains("TE"))
                             {
-                                teTemp = teTemp + Convert.ToDouble(currentPlayer.TradeValueChart);
+                                teTemp = teTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                                 teCount++;
                             }
                         }
@@ -338,15 +307,6 @@ namespace RML.Controllers
                 ros.RBRankingAverage = rbTemp;
                 ros.WRRankingAverage = wrTemp;
                 ros.TERankingAverage = teTemp;
-
-                //System.Diagnostics.Debug.WriteLine("Roster: " + ros.RosterID);
-                //System.Diagnostics.Debug.WriteLine("AVERAGE: " + ros.TeamRankingAverage);
-                //System.Diagnostics.Debug.WriteLine("QB AVERAGE: " + ros.QBRankingAverage);
-                //System.Diagnostics.Debug.WriteLine("RB AVERAGE: " + ros.RBRankingAverage);
-                //System.Diagnostics.Debug.WriteLine("WR AVERAGE: " + ros.WRRankingAverage);
-                //System.Diagnostics.Debug.WriteLine("TE AVERAGE: " + ros.TERankingAverage);
-
-
 
                 totalTemp = 0;
                 qbTemp = 0;
@@ -369,5 +329,176 @@ namespace RML.Controllers
             }
             return null;
         }
+
+        public List<Rosters> SortRostersByRanking(List<Rosters> rosters)
+        {
+            List<Rosters> sortedRosters = rosters.OrderByDescending(o => o.TeamRankingAverage).ToList();
+            return sortedRosters;
+        }
+
+        public List<Rosters> RankPositionGroups(List<Rosters> rosters)
+        {
+            List<Rosters> rankedRosters = new List<Rosters>();
+
+            rankedRosters = rosters.OrderByDescending(o => o.QBRankingAverage).ToList();
+            int count = 1;
+            foreach(var ros in rankedRosters)
+            {
+                ros.QBRanking = count;
+                count++;
+            }
+
+            rankedRosters = rosters.OrderByDescending(o => o.RBRankingAverage).ToList();
+            count = 1;
+            foreach (var ros in rankedRosters)
+            {
+                ros.RBRanking = count;
+                count++;
+            }
+
+            rankedRosters = rosters.OrderByDescending(o => o.WRRankingAverage).ToList();
+            count = 1;
+            foreach (var ros in rankedRosters)
+            {
+                ros.WRRanking = count;
+                count++;
+            }
+
+            rankedRosters = rosters.OrderByDescending(o => o.TERankingAverage).ToList();
+            count = 1;
+            foreach (var ros in rankedRosters)
+            {
+                ros.TERanking = count;
+                count++;
+            }
+
+            return rankedRosters;
+        }
+
+        #region COMMENTED OUT FUNCTIONS
+        //public Dictionary<string, PlayerData> LoadRankings(Dictionary<string, PlayerData> players, List<KeepTradeCut> ktc)
+        //{
+
+        //    using (var reader = new StreamReader("C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\Value_Scores_Full_Data_data.csv"))
+        //    {
+        //        List<string> playerNameList = new List<string>();
+        //        List<string> playerPositionList = new List<string>();
+        //        List<string> playerKeepTradeCutList = new List<string>();
+
+        //        while (!reader.EndOfStream)
+        //        {
+        //            var line = reader.ReadLine();
+        //            var values = line.Split(',');
+
+        //            playerNameList.Add(values[0]);
+        //            playerPositionList.Add(values[1]);
+        //        }
+
+        //        foreach (var p in players)
+        //        {
+        //            string temp = "";
+        //            string tempKTCValue = "";
+        //            KeepTradeCut tempKTC = new KeepTradeCut();
+        //            string firstNameTemp = p.Value.FirstName.Replace(".", string.Empty);
+        //            string lastNameTemp = p.Value.LastName.Replace(".", string.Empty);
+        //            temp = '"' + firstNameTemp + " " + lastNameTemp + '"';
+        //            temp = temp.Remove(0, 1);
+        //            temp = temp.Remove(temp.Length - 1, 1);
+
+        //            if (playerNameList.Contains(temp))
+        //            {
+        //                if (ktc.Any(a => a.PlayerName == temp))
+        //                {
+        //                    tempKTC = ktc.Find(a => a.PlayerName == temp);
+        //                    tempKTCValue = tempKTC.Value;
+        //                    p.Value.KeepTradeCutValue = tempKTCValue;
+
+        //                }
+        //            }
+
+        //        }
+
+        //        return players;
+        //    }
+        //}
+
+        //public List<KeepTradeCut> ScrapeRankings(Dictionary<string, PlayerData> players)
+        //{
+        //    string url = "https://keeptradecut.com/dynasty-rankings?page=0&filters=QB|WR|RB|TE|RDP&format=1";
+
+        //    HtmlAgilityPack.HtmlWeb web = new HtmlAgilityPack.HtmlWeb();
+        //    HtmlAgilityPack.HtmlDocument doc = web.Load(url);
+
+        //    var nameTable = doc.DocumentNode.SelectNodes("//div[@class='player-name']");
+        //    var valueTable = doc.DocumentNode.SelectNodes("//div[@class='value']");
+
+        //    List<string> nameList = new List<string>();
+        //    List<string> valueList = new List<string>();
+        //    string temp = "";
+        //    int tempSize = 0;
+        //    foreach (var name in nameTable)
+        //    {
+        //        temp = name.InnerText;
+        //        temp = temp.Trim();
+        //        temp = temp.Replace("//n", "");
+        //        tempSize = temp.Length;
+        //        System.Diagnostics.Debug.WriteLine(temp);
+        //        if (temp.EndsWith("R"))
+        //        {
+        //            temp = temp.Substring(0, tempSize - 1);
+        //            temp = temp.Trim();
+        //            temp = temp.Replace("\\n", "");
+        //        }
+        //        if (temp.Contains("."))
+        //        {
+        //            temp = temp.Replace(".", String.Empty);
+        //        }
+        //        if (temp.Contains("&#x27;"))
+        //        {
+        //            temp = temp.Replace("&#x27;", "'");
+        //        }
+        //        nameList.Add(temp);
+        //    }
+        //    foreach (var value in valueTable)
+        //    {
+        //        temp = value.InnerText;
+        //        temp = temp.Trim();
+        //        temp = temp.Replace("//n", "");
+        //        valueList.Add(temp);
+        //    }
+
+        //    string tempName, tempValue;
+        //    int count = 0;
+        //    List<KeepTradeCut> ktcList = new List<KeepTradeCut>();
+        //    KeepTradeCut newKtc = new KeepTradeCut();
+
+        //    foreach (var p in nameList)
+        //    {
+        //        newKtc = new KeepTradeCut();
+        //        tempName = p;
+        //        tempValue = valueList.ElementAt(count);
+        //        count++;
+
+        //        newKtc.PlayerName = tempName;
+        //        newKtc.Value = tempValue;
+
+        //        ktcList.Add(newKtc);
+        //    }
+
+        //    return ktcList;
+        //}
+
+
+        //public List<Rosters> SortPlayersOnRosterByValue(List<Rosters> rosters)
+        //{
+        //    List<Rosters> sortedRosters = new List<Rosters>();
+
+        //    foreach(var ros in sortedRosters)
+        //    {
+        //        ros.PlayersOnRoster = ros.PlayersOnRoster.OrderByDescending(o => o.Value.PORValue);
+        //    }
+        //    return sortedRosters;
+        //}
+        #endregion
     }
 }

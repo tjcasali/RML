@@ -27,11 +27,9 @@ namespace RML.Models
         [JsonProperty(PropertyName = "age")]
         public string Age { get; set; }
 
-        public string FantasyProsRanking { get; set; }
-
-        public string FantasyProsSFRanking { get; set; }
-
         public string TradeValueChart { get; set; }
+
+        public string KeepTradeCutValue { get; set; }
     }
 
     public class Players

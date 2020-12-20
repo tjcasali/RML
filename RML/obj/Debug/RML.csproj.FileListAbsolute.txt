@@ -77,3 +77,6 @@ C:\Users\timca\source\repos\RML\RML\obj\Debug\RML.csproj.CoreCompileInputs.cache
 C:\Users\timca\source\repos\RML\RML\obj\Debug\RML.csproj.CopyComplete
 C:\Users\timca\source\repos\RML\RML\obj\Debug\RML.dll
 C:\Users\timca\source\repos\RML\RML\obj\Debug\RML.pdb
+C:\Users\timca\source\repos\RML\RML\bin\HtmlAgilityPack.dll
+C:\Users\timca\source\repos\RML\RML\bin\HtmlAgilityPack.pdb
+C:\Users\timca\source\repos\RML\RML\bin\HtmlAgilityPack.xml

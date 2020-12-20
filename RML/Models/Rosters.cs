@@ -23,18 +23,35 @@ namespace RML.Models
         [JsonProperty(PropertyName = "owner_id")]
         public string OwnerID { get; set; }
 
+        public string DisplayName { get; set; }
+
         public List<string> PlayerNames { get; set; }
 
+        public List<string> PlayerTradeValues { get; set; }
+
         public double TeamRankingAverage { get; set; }
-
         public double QBRankingAverage { get; set; }
-
         public double RBRankingAverage { get; set; }
-
         public double WRRankingAverage { get; set; }
-
         public double TERankingAverage { get; set; }
 
+        public bool SelectedRoster { get; set; }
 
+        public Dictionary<string, POR> PlayersOnRoster { get; set; }
+
+        public int QBRanking { get; set; }
+        public int RBRanking { get; set; }
+        public int WRRanking { get; set; }
+        public int TERanking { get; set; }
+        public int TotalRanking { get; set; }
+
+
+    }
+
+    public class POR
+    {
+        public string PORName { get; set; }
+        public string PORPosition { get; set; }
+        public int PORValue { get; set; }
     }
 }

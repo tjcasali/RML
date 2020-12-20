@@ -1,40 +1,66 @@
-﻿@model RML.ViewModels.RostersViewModel
+﻿@model RML.ViewModels.DisplayLeagueViewModel
 
-    <h2>@Model.Rosters.Count</h2>
+<link href="~/StyleSheet.css" rel="stylesheet" />
 
-    <ul>
-        @foreach (var roster in Model.Rosters)
+@*<div class="selectTeam">
+        <label>Select Your Roster for Trade Information</label>
+        @for (int i = 0; i < Model.Rosters.Count; i++)
         {
-            <li>@roster.RosterID</li>
-
-            <li>Team Ranking: @roster.TeamRankingAverage</li>
-            <li>QB Ranking: @roster.QBRankingAverage</li>
-            <li>RB Ranking: @roster.RBRankingAverage</li>
-            <li>WR Ranking: @roster.WRRankingAverage</li>
-            <li>TE Ranking: @roster.TERankingAverage</li>
-            foreach (var player in roster.PlayerNames)
-            {
-                <li>@player</li>
-            }
+            @Html.LabelFor(modelItem => Model.Rosters[i].OwnerID)
+            @Html.CheckBoxFor(modelItem => Model.Rosters[i].SelectedRoster)
         }
-    </ul>
+    </div>*@
 
-@*@model RML.ViewModels.DisplayLeagueViewModel
-
-<ul>
+<div class="rostersParent">
     @foreach (var roster in Model.Rosters)
     {
-        <li>@roster.RosterID</li>
+        //IF I WANT TO DO SPECIAL CSS on X ROSTERS<div class="homepageContainer" id="roster-@rosterCounter">
+    <div id="roster">
 
-        <li>Team Ranking: @roster.TeamRankingAverage</li>
-        <li>QB Ranking: @roster.QBRankingAverage</li>
-        <li>RB Ranking: @roster.RBRankingAverage</li>
-        <li>WR Ranking: @roster.WRRankingAverage</li>
-        <li>TE Ranking: @roster.TERankingAverage</li>
-        foreach (var player in roster.PlayerNames)
+        @*@if (roster.SelectedRoster)
         {
-            <li>@player</li>
+            <h3>Selected Roster!</h3>
+        }*@
 
-        
+        <h4>@roster.DisplayName <br /></h4>
+
+        <h4>Team Ranking: @roster.TeamRankingAverage</h4> <br />
+
+        @*@foreach (var player in roster.PlayersOnRoster.OrderByDescending(o => o.Value.PORValue))
+        {
+            @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+            @player.Value.PORValue  <br />
+        }*@
+
+        <div class="position-rankings">QB Ranking: @roster.QBRanking <text> - </text>@roster.QBRankingAverage </div> <br />
+        @foreach (var player in roster.PlayersOnRoster.Where(o => o.Value.PORPosition == "QB").OrderByDescending(o => o.Value.PORValue))
+        {
+            @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+            @player.Value.PORValue <br />
+        }
+        <br />
+        <div class="position-rankings">RB Ranking: @roster.RBRanking <text> - </text>@roster.RBRankingAverage </div> <br />
+        @foreach (var player in roster.PlayersOnRoster.Where(o => o.Value.PORPosition == "RB").OrderByDescending(o => o.Value.PORValue))
+        {
+            @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+            @player.Value.PORValue <br />
+        }
+        <br />
+        <div class="position-rankings">WR Ranking: @roster.WRRanking <text> - </text>@roster.WRRankingAverage </div> <br />
+        @foreach (var player in roster.PlayersOnRoster.Where(o => o.Value.PORPosition == "WR").OrderByDescending(o => o.Value.PORValue))
+        {
+            @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+            @player.Value.PORValue <br />
+        }
+        <br />
+        <div class="position-rankings">TE Ranking: @roster.TERanking <text> - </text>@roster.TERankingAverage </div> <br />
+        @foreach (var player in roster.PlayersOnRoster.Where(o => o.Value.PORPosition == "TE").OrderByDescending(o => o.Value.PORValue))
+        {
+            @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+            @player.Value.PORValue <br />
+        }
+
+    </div>
     }
-</ul>*@
+</div>
+

@@ -1,0 +1,51 @@
+﻿.rostersParent {
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+#bold{
+    font-weight:bold;
+}
+
+#roster {
+    color: black;
+    float: left;
+    padding: 1em;
+    padding-bottom: 100px;
+    background-color: lightcyan;
+}
+
+.position-rankings{
+    font-weight:bold;
+    align-content:center;
+}
+
+/*#roster-0 {
+    color: aqua;
+    float: left;
+    width: 33%;
+    padding: 1em;
+        background-color: lightcoral !important;
+        width: auto;
+    height: auto;
+    overflow: auto;
+        width: auto;
+    height: auto;
+    overflow: auto;
+
+
+}
+
+#roster-1 {
+    color: red;
+    float: left;
+    width: 23%;
+}
+
+#roster-2 {
+    color: black;
+    float: left;
+    width: 23%;
+}*/
