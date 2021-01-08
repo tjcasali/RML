@@ -23,6 +23,12 @@ namespace RML.Models
         [JsonProperty(PropertyName = "owner_id")]
         public string OwnerID { get; set; }
 
+        //[JsonProperty(PropertyName = "wins")]
+        //public string Wins { get; set; }
+
+        //[JsonProperty(PropertyName = "losses")]
+        //public string Losses { get; set; }
+
         public string DisplayName { get; set; }
 
         public List<string> PlayerNames { get; set; }
@@ -35,7 +41,7 @@ namespace RML.Models
         public double WRRankingAverage { get; set; }
         public double TERankingAverage { get; set; }
 
-        public bool SelectedRoster { get; set; }
+        public int SelectedRoster { get; set; }
 
         public Dictionary<string, POR> PlayersOnRoster { get; set; }
 
@@ -46,6 +52,11 @@ namespace RML.Models
         public int TotalRanking { get; set; }
 
 
+        public List<string> TradeCandidates { get; set; }
+
+        public int TotalCandidateAdvantage { get; set; }
+        public int TotalCandidateDisadvantage { get; set; }
+        public int TotalDisparity { get; set; }
     }
 
     public class POR

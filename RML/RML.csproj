@@ -139,6 +139,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModels\DisplayLeagueViewModel.cs" />
     <Compile Include="ViewModels\RostersViewModel.cs" />
+    <Compile Include="ViewModels\TeamBreakdownViewModel.cs" />
     <Compile Include="ViewModels\UserInfoViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -148,6 +149,7 @@
     <Content Include="Content\bootstrap-reboot.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Data\RML.jpg" />
     <Content Include="Data\SleeperGetPlayers.txt" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
@@ -156,6 +158,12 @@
     <Content Include="Data\FantasyPros_2020_Dynasty_ALL_Rankings %282%29.csv" />
     <Content Include="Data\FantasyPros_2020_Dynasty_ALL_Rankings.csv" />
     <Content Include="Data\Value_Scores_Full_Data_data.csv" />
+    <Content Include="Images\DRHomepage6.png" />
+    <Content Include="Images\DRLogo1.png" />
+    <Content Include="Images\DRLogo2.png" />
+    <Content Include="Images\DRLogo3.jpg" />
+    <Content Include="Images\DRLogo4.jpg" />
+    <Content Include="Images\DRLogo5.jpg" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.js" />
@@ -288,6 +296,8 @@
     <Content Include="Scripts\popper.js.map" />
     <Content Include="Scripts\popper-utils.min.js.map" />
     <Content Include="Scripts\popper-utils.js.map" />
+    <Content Include="Views\Sleeper\TeamBreakdown.cshtml" />
+    <Content Include="Views\Sleeper\InvalidLeagueID.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

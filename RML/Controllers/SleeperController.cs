@@ -11,16 +11,19 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.IO;
+using System.Web.UI.WebControls;
 
 namespace RML.Controllers
 {
     public class SleeperController : Controller
     {
+        //League IDs: Zacks (2QB) 650889409121607680
 
         public List<SleeperUsers> sleeperUsers = new List<SleeperUsers>();
-        public List<Rosters> sleeperRosters = new List<Rosters>();
+        public static List<Rosters> sleeperRosters = new List<Rosters>();
         public Dictionary<string, PlayerData> playerList = new Dictionary<string, PlayerData>();
         public List<KeepTradeCut> keepTradeCutList = new List<KeepTradeCut>();
+        public UserInfo leagueInformation = new UserInfo();
 
         // GET: Sleeper
         public ActionResult Index()
@@ -28,18 +31,36 @@ namespace RML.Controllers
             return View();
         }
 
-        public async Task<ActionResult> DisplayLeague(UserInfo user)
+        #region ActionResults
+
+        //[Route("Sleeper/DisplayLeague/{leagueId}")]
+        public async Task<ActionResult> DisplayLeague(string leagueID)
         {
-            sleeperUsers = await GetUsers(user);
-            sleeperRosters = await GetRosters(user);
-            playerList = GetPlayers();
+            if(leagueID != String.Empty)
+            {
+                try
+                {
+                    leagueInformation = await GetLeagueInformation(leagueID);
+                    sleeperUsers = await GetUsers(leagueID);
+                    sleeperRosters = await GetRosters(leagueID);
+                    playerList = GetPlayers();
+                }
+                catch
+                {
+                    return RedirectToAction("InvalidLeagueID");
+                }
+            }
+            else
+            {
+                return RedirectToAction("InvalidLeagueID");
+            }
             LinkUsersAndRosters(sleeperUsers, sleeperRosters);
 
             //LoadSleeperPlayersTextFile();
 
             //keepTradeCutList = ScrapeRankings(playerList);
 
-            playerList = LoadRankings(playerList, keepTradeCutList);
+            playerList = LoadRankings(playerList, keepTradeCutList, leagueInformation);
 
             sleeperRosters = AverageTeamRanking(sleeperRosters, playerList);
 
@@ -51,40 +72,82 @@ namespace RML.Controllers
 
             var viewModel = new DisplayLeagueViewModel
             {
-                Rosters = sleeperRosters
+                Rosters = sleeperRosters,
+                UserInfo = leagueInformation
+            };
+
+            return View(viewModel);
+        }
+        public ActionResult TeamBreakdown(string leagueID, string name)
+        {
+            foreach (var ros in sleeperRosters)
+            {
+                if (ros.DisplayName == name)
+                {
+                    ros.SelectedRoster = 1;
+                    continue;
+                }
+            }
+
+            sleeperRosters = FindTradeTargets(sleeperRosters);
+
+            var viewModel = new TeamBreakdownViewModel
+            {
+                Rosters = sleeperRosters,
+                SelectedRosterVM = sleeperRosters.Find(x => x.SelectedRoster == 1),
+                LeagueID = leagueID
             };
 
             return View(viewModel);
         }
 
-        #region Get Rosters/Users/Players
-        public async Task<List<Rosters>> GetRosters(UserInfo user)
+        public ActionResult InvalidLeagueID()
         {
+            return View();
+        }
 
+        #endregion
+
+        #region Get Rosters/Users/Players
+
+        public async Task<UserInfo> GetLeagueInformation(string leagueID)
+        {
             HttpClient client = new HttpClient();
 
-            //My roster ID: 325829344368812032
-            //string leagueID = "515558249940426752";
-            string leagueID = user.LeagueID;
 
-
-            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/rosters");
+            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID);
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
-            List<Rosters> rosters = JsonConvert.DeserializeObject<List<Rosters>>(responseBody);
+            UserInfo leagueInfo= JsonConvert.DeserializeObject<UserInfo>(responseBody);
+            bool isSuper = false;
+            int qbCount = 0;
+            foreach(string position in leagueInfo.LeagueRosterPositions)
+            {
+                if(position == "QB")
+                {
+                    qbCount++;
+                }
+                if(position == "SUPER_FLEX" || qbCount > 1)
+                {
+                    isSuper = true;
+                    break;
+                }
+            }
 
-            return rosters;
+            leagueInfo.SuperFlex = isSuper;
+            leagueInfo.LeagueID = leagueID;
+
+            return leagueInfo;
         }
 
         /// Get Users
         /// Take in user submitted league ID and put that into the Sleeper API to return the Users in the league
-        public async Task<List<SleeperUsers>> GetUsers(UserInfo user)
+        public async Task<List<SleeperUsers>> GetUsers(string leagueID)
         {
             HttpClient client = new HttpClient();
 
             //string leagueID = "515558249940426752";
-            string leagueID = user.LeagueID;
 
             HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/users");
             response.EnsureSuccessStatusCode();
@@ -94,6 +157,23 @@ namespace RML.Controllers
 
             return userList;
 
+        }
+
+        public async Task<List<Rosters>> GetRosters(string leagueID)
+        {
+
+            HttpClient client = new HttpClient();
+
+            //My roster ID: 325829344368812032
+            //string leagueID = "515558249940426752";
+            
+            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/rosters");
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            List<Rosters> rosters = JsonConvert.DeserializeObject<List<Rosters>>(responseBody);
+
+            return rosters;
         }
 
         public async void LoadSleeperPlayersTextFile()
@@ -174,10 +254,153 @@ namespace RML.Controllers
         }
         #endregion
 
-        public Dictionary<string, PlayerData> LoadRankings(Dictionary<string, PlayerData> players, List<KeepTradeCut> ktc)
-        {
+        //public List<KeepTradeCut> ScrapeRankings(Dictionary<string, PlayerData> players)
+        //{
+        //    string url = "https://keeptradecut.com/dynasty-rankings?page=0&filters=QB|WR|RB|TE|RDP&format=1";
 
-            using (var reader = new StreamReader("C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\KTCScrape.csv"))
+        //    HtmlAgilityPack.HtmlWeb web = new HtmlAgilityPack.HtmlWeb();
+        //    HtmlAgilityPack.HtmlDocument doc = web.Load(url);
+
+        //    var nameTable = doc.DocumentNode.SelectNodes("//div[@class='player-name']");
+        //    var valueTable = doc.DocumentNode.SelectNodes("//div[@class='value']");
+        //    var positionTeamTable = doc.DocumentNode.SelectNodes("//div[@class='position-team']");
+
+
+        //    List<string> nameList = new List<string>();
+        //    List<string> valueList = new List<string>();
+        //    List<string> positionList = new List<string>();
+        //    List<string> teamList = new List<string>();
+
+        //    string temp, positionTemp, teamTemp = "";
+        //    int tempSize = 0;
+
+        //    foreach (var name in nameTable.Skip(1))
+        //    {
+        //        temp = name.InnerText;
+        //        temp = temp.Trim();
+        //        temp = temp.Replace("//n", "");
+        //        tempSize = temp.Length;
+        //        System.Diagnostics.Debug.WriteLine(temp);
+        //        if (temp.EndsWith("R"))
+        //        {
+        //            temp = temp.Substring(0, tempSize - 1);
+        //            temp = temp.Trim();
+        //            temp = temp.Replace("\\n", "");
+        //        }
+        //        if (temp.Contains("."))
+        //        {
+        //            temp = temp.Replace(".", String.Empty);
+        //        }
+        //        if (temp.Contains("&#x27;"))
+        //        {
+        //            temp = temp.Replace("&#x27;", "'");
+        //        }
+        //        if (temp.Contains("Jr."))
+        //        {
+        //            temp = temp.Replace("Jr.", "");
+        //        }
+        //        if (temp.Contains("Lamical"))
+        //        {
+        //            temp = "La'Mical Perine";
+        //        }
+        //        if (temp.Contains("JaMycal"))
+        //        {
+        //            temp = "Jamycal Hasty";
+        //        }
+        //        nameList.Add(temp);
+        //    }
+        //    foreach (var value in valueTable.Skip(1))
+        //    {
+        //        temp = value.InnerText;
+        //        temp = temp.Trim();
+        //        temp = temp.Replace("//n", "");
+        //        valueList.Add(temp);
+        //    }
+        //    foreach (var positionteam in positionTeamTable.Skip(1))
+        //    {
+        //        temp = positionteam.InnerText;
+        //        temp = temp.Trim();
+        //        temp = temp.Replace("//n", "");
+
+        //        positionTemp = temp.Substring(0, 2);
+        //        if (positionTemp == "RD")
+        //            positionTemp = "NA";
+
+        //        temp = temp.Remove(0, 3);
+
+        //        teamTemp = temp;
+
+        //        teamList.Add(teamTemp);
+        //        positionList.Add(positionTemp);
+        //    }
+
+
+        //    string tempName, tempValue, tempPosition, tempTeam;
+        //    int count = 0;
+        //    List<Players> ktcList = new List<Players>();
+
+        //    Players newKtc = new Players();
+
+        //    foreach (var p in nameList)
+        //    {
+        //        newKtc = new Players();
+        //        tempName = p;
+        //        if (valueList.ElementAt(count) != null)
+        //        {
+        //            tempValue = valueList.ElementAt(count);
+        //        }
+        //        else
+        //        {
+        //            tempValue = "NA";
+        //        }
+        //        if (teamList.ElementAt(count) != null)
+        //        {
+        //            tempTeam = teamList.ElementAt(count);
+        //        }
+        //        else
+        //        {
+        //            tempTeam = "NA";
+        //        }
+        //        if (positionList.ElementAt(count) != null)
+        //        {
+        //            tempPosition = positionList.ElementAt(count);
+        //        }
+        //        else
+        //        {
+        //            tempPosition = "NA";
+        //        }
+        //        newKtc.Player = tempName;
+        //        newKtc.Value = tempValue;
+        //        newKtc.Position = tempPosition;
+        //        newKtc.Team = tempTeam;
+
+        //        ktcList.Add(newKtc);
+
+        //        count++;
+        //    }
+
+        //    string fileName = "C:\\Users\\timca\\source\\repos\\RML\\RML\\KTCScrape.csv";
+        //    string newLine = "";
+
+        //    System.IO.File.WriteAllText(fileName, String.Empty);
+        //    foreach (var p in ktcList)
+        //    {
+        //        newLine = "";
+        //        newLine = p.Name + "," + p.Position + "," + p.Team + "," + p.Value + Environment.NewLine;
+        //        System.IO.File.AppendAllText(fileName, newLine);
+        //    }
+        //}
+
+        public Dictionary<string, PlayerData> LoadRankings(Dictionary<string, PlayerData> players, List<KeepTradeCut> ktc, UserInfo leagueInfo)
+        {
+            string sr = "";
+
+            if (leagueInfo.SuperFlex)
+                sr = "C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\KTCScrapeSF.csv";
+            else
+                sr = "C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\KTCScrape.csv";
+
+            using (var reader = new StreamReader(sr))
             {
                 List<string> playerNameList = new List<string>();
                 List<string> playerPositionList = new List<string>();
@@ -374,6 +597,54 @@ namespace RML.Controllers
 
             return rankedRosters;
         }
+
+        public List<Rosters> FindTradeTargets(List<Rosters> rosters)
+        {
+            var tempRoster = rosters.Find(x => x.SelectedRoster == 1);
+
+            List<string> tempTradeCandidates = new List<string>();
+
+            bool qbAdv;
+            bool rbAdv;
+            bool wrAdv;
+            bool teAdv;
+
+            foreach (var ros in rosters)
+            {
+                
+                if (ros.RosterID != tempRoster.RosterID)
+                {
+                    qbAdv = false;
+                    rbAdv = false;
+                    wrAdv = false;
+                    teAdv = false;
+
+                    //if(ros.QBRankingAverage > tempRoster.QBRankingAverage || ros.RBRankingAverage > tempRoster.RBRankingAverage || ros.WRRankingAverage > tempRoster.WRRankingAverage || ros.TERankingAverage > tempRoster.TERankingAverage)
+                    if (ros.QBRankingAverage > tempRoster.QBRankingAverage)
+                        qbAdv = true;
+                    if (ros.RBRankingAverage > tempRoster.RBRankingAverage)
+                        rbAdv = true;
+                    if (ros.WRRankingAverage > tempRoster.WRRankingAverage)
+                        wrAdv = true;
+                    if (ros.TERankingAverage > tempRoster.TERankingAverage)
+                        teAdv = true;
+
+                    if (qbAdv && rbAdv && wrAdv && teAdv || !qbAdv && !rbAdv && !wrAdv && !teAdv)
+                    {
+                        continue;
+                    }
+
+                    if (qbAdv || rbAdv || wrAdv || teAdv)
+                    {
+                        tempTradeCandidates.Add(ros.DisplayName);
+                    }
+                }
+            }
+            tempRoster.TradeCandidates = tempTradeCandidates;
+
+            return rosters;
+        }
+
 
         #region COMMENTED OUT FUNCTIONS
         //public Dictionary<string, PlayerData> LoadRankings(Dictionary<string, PlayerData> players, List<KeepTradeCut> ktc)

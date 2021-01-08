@@ -1,15 +1,46 @@
 ﻿@model RML.Models.UserInfo
 
-<div class="text-center">
-    <h1 class="display-4">Enter your Sleeper League ID.</h1>
+<link href="~/StyleSheet.css" rel="stylesheet" />
 
-</div>
+<body style="background-color:#18202F;">
 
-@using (Html.BeginForm("DisplayLeague", "Sleeper"))
-{
-    <div class="form-group">
-        @Html.LabelFor(m => m.LeagueID)
-        @Html.TextBoxFor(m => m.LeagueID, new { @class = "form-control" })
+    <div class="homePage">
+
+        <div class="littleGap"></div>
+
+        <div class="infobox-container">
+
+            <div class="infobox-child">
+                <h6>Rank the teams in your league</h6>
+                <p>
+                    The team over at <a href="https://keeptradecut.com/">KeepTradeCut.com</a> has an incredible system to determine player trade values based on crowdsourced data.
+                    Here at DynastyRanker you can enter your Sleeper League ID and rank the teams in your league based on the trade values over at KeepTradeCut.
+                </p><br />
+            </div>
+
+            @*<div class="infobox-child">
+                <h6>Send trades that will get accepted.</h6>
+                <p>
+                    Sometimes it can seem impossible to send trades that will get accepted even if the value lines up, hopefully we can help.
+                    Click to view your team's trade candidates and send trades that will improve the other owner's team as well as yours.
+                </p><br />
+            </div>*@
+
+        </div>
+
+        <div class="littleGap"></div>
+
+        <div class="sleeperID">
+            <h1>Enter your Sleeper League ID.</h1><br />
+
+            @using (Html.BeginForm("DisplayLeague", "Sleeper"))
+            {
+                @Html.TextBoxFor(m => m.LeagueID, new { @class = "sleeperIDField" })
+                <button type="submit" class="btn btn-info">Submit</button>
+            }
+        </div>
+        <div class="littleGap"></div>
+
+        <img alt="Dynasty Ranker" src="@Url.Content("~/Images/DRHomepage6.png")" class="hideIfSmol">
     </div>
-    <button type="submit" class="btn btn-primary">Save</button>
-}
+</body>
