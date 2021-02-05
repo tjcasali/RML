@@ -41,15 +41,30 @@ namespace RML.Models
         public double WRRankingAverage { get; set; }
         public double TERankingAverage { get; set; }
 
+        public double TeamStartingTotal { get; set; }
+        public double QBStartingTotal { get; set; }
+        public double RBStartingTotal { get; set; }
+        public double WRStartingTotal { get; set; }
+        public double TEStartingTotal { get; set; }
+        public double FLEXStartingTotal { get; set; }
+
+
+        public double TeamStarting { get; set; }
+        public double QBStarting { get; set; }
+        public double RBStarting { get; set; }
+        public double WRStarting { get; set; }
+        public double TEStarting { get; set; }
+
+        public int StartingTeamRank { get; set; }
+
         public int SelectedRoster { get; set; }
 
         public Dictionary<string, POR> PlayersOnRoster { get; set; }
 
-        public int QBRanking { get; set; }
-        public int RBRanking { get; set; }
-        public int WRRanking { get; set; }
-        public int TERanking { get; set; }
-        public int TotalRanking { get; set; }
+        public int QBRank { get; set; }
+        public int RBRank { get; set; }
+        public int WRRank { get; set; }
+        public int TERank { get; set; }
 
 
         public List<string> TradeCandidates { get; set; }
@@ -57,6 +72,10 @@ namespace RML.Models
         public int TotalCandidateAdvantage { get; set; }
         public int TotalCandidateDisadvantage { get; set; }
         public int TotalDisparity { get; set; }
+
+        public List<string> StartingPlayerList { get; set; }
+
+        public List<string> StartingFlexList { get; set; }
     }
 
     public class POR

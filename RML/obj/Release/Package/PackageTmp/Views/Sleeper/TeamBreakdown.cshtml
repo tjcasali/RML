@@ -1,0 +1,228 @@
+﻿@model RML.ViewModels.TeamBreakdownViewModel
+    <body class="leagueBody">
+
+        <link href="~/StyleSheet.css" rel="stylesheet" />
+
+
+        <h2 class="whiteText">@Model.SelectedRosterVM.DisplayName Trade Candidates</h2>
+
+        <!--<a href="javascript:history.go(-1)">Return To League</a>-->
+
+        @Html.ActionLink(
+                      "Return to League",
+                      "DisplayLeague",                          // controller action
+                      "Sleeper",                                // controller
+                      new { leagueID = @Model.LeagueID},        // action parameters aka route values
+                      new { @class = "btn btn-secondary btn-sm" })<br/>
+
+
+        @{
+            int tcQBadv, tcRBadv, tcWRadv, tcTEadv;
+        }
+
+        <div class="rostersParent">
+            <div id="noScrollroster">
+                <div class="position-rankings">QB Ranking: @Model.SelectedRosterVM.QBRanking <text> - </text>@Model.SelectedRosterVM.QBRankingAverage </div> <br />
+                @foreach (var player in Model.SelectedRosterVM.PlayersOnRoster.Where(o => o.Value.PORPosition == "QB").OrderByDescending(o => o.Value.PORValue))
+                {
+                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                    @player.Value.PORValue <br />
+                }
+                <br />
+                <div class="position-rankings">RB Ranking: @Model.SelectedRosterVM.RBRanking <text> - </text>@Model.SelectedRosterVM.RBRankingAverage </div> <br />
+                @foreach (var player in Model.SelectedRosterVM.PlayersOnRoster.Where(o => o.Value.PORPosition == "RB").OrderByDescending(o => o.Value.PORValue))
+                {
+                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                    @player.Value.PORValue <br />
+                }
+                <br />
+                <div class="position-rankings">WR Ranking: @Model.SelectedRosterVM.WRRanking <text> - </text>@Model.SelectedRosterVM.WRRankingAverage </div> <br />
+                @foreach (var player in Model.SelectedRosterVM.PlayersOnRoster.Where(o => o.Value.PORPosition == "WR").OrderByDescending(o => o.Value.PORValue))
+                {
+                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                    @player.Value.PORValue <br />
+                }
+                <br />
+                <div class="position-rankings">TE Ranking: @Model.SelectedRosterVM.TERanking <text> - </text>@Model.SelectedRosterVM.TERankingAverage </div> <br />
+                @foreach (var player in Model.SelectedRosterVM.PlayersOnRoster.Where(o => o.Value.PORPosition == "TE").OrderByDescending(o => o.Value.PORValue))
+                {
+                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                    @player.Value.PORValue <br />
+                }
+            </div>
+
+            @foreach (var tc in Model.SelectedRosterVM.TradeCandidates)
+            {
+                <div class="tradebreakdownRoster">
+                    @{
+                        tcQBadv = 0;
+                        tcRBadv = 0;
+                        tcWRadv = 0;
+                        tcTEadv = 0;
+
+                        @tc <text> </text><br />
+
+                        Model.TCRoster = Model.Rosters.Find(x => x.DisplayName == tc);
+
+
+                        if (@Model.TCRoster.QBRankingAverage > @Model.SelectedRosterVM.QBRankingAverage)
+                        {
+                            tcQBadv = 1;
+
+                            Model.TCRoster.TotalCandidateAdvantage = Model.TCRoster.TotalCandidateAdvantage + (Model.SelectedRosterVM.QBRanking - Model.TCRoster.QBRanking);
+                            Model.TCRoster.TotalDisparity = Model.TCRoster.TotalDisparity + (Model.SelectedRosterVM.QBRanking - Model.TCRoster.QBRanking);
+                            <text>@Model.TCRoster.DisplayName can help you at QB </text><br />
+                        }
+                        else
+                        {
+                            Model.TCRoster.TotalCandidateDisadvantage = Model.TCRoster.TotalCandidateDisadvantage + (Model.TCRoster.QBRanking - Model.SelectedRosterVM.QBRanking);
+                            Model.TCRoster.TotalDisparity = Model.TCRoster.TotalDisparity + (Model.TCRoster.QBRanking - Model.SelectedRosterVM.QBRanking);
+                            <text>You can help @Model.TCRoster.DisplayName at QB </text><br />
+                        }
+
+                        if (@Model.TCRoster.RBRankingAverage > @Model.SelectedRosterVM.RBRankingAverage)
+                        {
+                            tcRBadv = 1;
+                            Model.TCRoster.TotalCandidateAdvantage = Model.TCRoster.TotalCandidateAdvantage + (Model.SelectedRosterVM.RBRanking - Model.TCRoster.RBRanking);
+                            Model.TCRoster.TotalDisparity = Model.TCRoster.TotalDisparity + (Model.SelectedRosterVM.RBRanking - Model.TCRoster.RBRanking);
+                            <text>@Model.TCRoster.DisplayName can help you at RB </text><br />
+                        }
+                        else
+                        {
+                            Model.TCRoster.TotalCandidateDisadvantage = Model.TCRoster.TotalCandidateDisadvantage + (Model.TCRoster.RBRanking - Model.SelectedRosterVM.RBRanking);
+                            Model.TCRoster.TotalDisparity = Model.TCRoster.TotalDisparity + (Model.TCRoster.RBRanking - Model.SelectedRosterVM.RBRanking);
+                            <text>You can help @Model.TCRoster.DisplayName at RB </text><br />
+                        }
+
+                        if (@Model.TCRoster.WRRankingAverage > @Model.SelectedRosterVM.WRRankingAverage)
+                        {
+                            tcWRadv = 1;
+                            Model.TCRoster.TotalCandidateAdvantage = Model.TCRoster.TotalCandidateAdvantage + (Model.SelectedRosterVM.WRRanking - Model.TCRoster.WRRanking);
+                            Model.TCRoster.TotalDisparity = Model.TCRoster.TotalDisparity + (Model.SelectedRosterVM.WRRanking - Model.TCRoster.WRRanking);
+                            <text>@Model.TCRoster.DisplayName can help you at WR </text><br />
+                        }
+                        else
+                        {
+                            Model.TCRoster.TotalCandidateDisadvantage = Model.TCRoster.TotalCandidateDisadvantage + (Model.TCRoster.WRRanking - Model.SelectedRosterVM.WRRanking);
+                            Model.TCRoster.TotalDisparity = Model.TCRoster.TotalDisparity + (Model.TCRoster.WRRanking - Model.SelectedRosterVM.WRRanking);
+                            <text>You can help @Model.TCRoster.DisplayName at WR </text><br />
+                        }
+
+                        if (@Model.TCRoster.TERankingAverage > @Model.SelectedRosterVM.TERankingAverage)
+                        {
+                            tcTEadv = 1;
+                            Model.TCRoster.TotalCandidateAdvantage = Model.TCRoster.TotalCandidateAdvantage + (Model.SelectedRosterVM.TERanking - Model.TCRoster.TERanking);
+                            Model.TCRoster.TotalDisparity = Model.TCRoster.TotalDisparity + (Model.SelectedRosterVM.TERanking - Model.TCRoster.TERanking);
+                            <text>@Model.TCRoster.DisplayName can help you at TE </text><br />
+                        }
+                        else
+                        {
+                            Model.TCRoster.TotalCandidateDisadvantage = Model.TCRoster.TotalCandidateDisadvantage + (Model.TCRoster.TERanking - Model.SelectedRosterVM.TERanking);
+                            Model.TCRoster.TotalDisparity = Model.TCRoster.TotalDisparity + (Model.TCRoster.TERanking - Model.SelectedRosterVM.TERanking);
+                            <text>You can help @Model.TCRoster.DisplayName at TE </text><br />
+                        }
+
+                        <div class="position-rankings">QB Ranking: @Model.TCRoster.QBRanking <text> - </text>@Model.TCRoster.QBRankingAverage </div> <br />
+                        if (tcQBadv == 1)
+                        {
+                            <div class="greenPlayerText">
+                                @foreach (var player in Model.TCRoster.PlayersOnRoster.Where(o => o.Value.PORPosition == "QB").OrderByDescending(o => o.Value.PORValue))
+                                {
+                                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                                    @player.Value.PORValue <br />
+                                }
+                                <br />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="redPlayerText">
+                                @foreach (var player in Model.TCRoster.PlayersOnRoster.Where(o => o.Value.PORPosition == "QB").OrderByDescending(o => o.Value.PORValue))
+                                {
+                                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                                    @player.Value.PORValue <br />
+                                }
+                                <br />
+                            </div>
+                        }
+
+                        <div class="position-rankings">RB Ranking: @Model.TCRoster.RBRanking <text> - </text>@Model.TCRoster.RBRankingAverage </div> <br />
+                        if (tcRBadv == 1)
+                        {
+                            <div class="greenPlayerText">
+                                @foreach (var player in Model.TCRoster.PlayersOnRoster.Where(o => o.Value.PORPosition == "RB").OrderByDescending(o => o.Value.PORValue))
+                                {
+                                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                                    @player.Value.PORValue <br />
+                                }
+                                <br />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="redPlayerText">
+                                @foreach (var player in Model.TCRoster.PlayersOnRoster.Where(o => o.Value.PORPosition == "RB").OrderByDescending(o => o.Value.PORValue))
+                                {
+                                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                                    @player.Value.PORValue <br />
+                                }
+                                <br />
+                            </div>
+                        }
+
+                        <div class="position-rankings">WR Ranking: @Model.TCRoster.WRRanking <text> - </text>@Model.TCRoster.WRRankingAverage </div> <br />
+                        if (tcWRadv == 1)
+                        {
+                            <div class="greenPlayerText">
+                                @foreach (var player in Model.TCRoster.PlayersOnRoster.Where(o => o.Value.PORPosition == "WR").OrderByDescending(o => o.Value.PORValue))
+                                {
+                                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                                    @player.Value.PORValue <br />
+                                }
+                                <br />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="redPlayerText">
+                                @foreach (var player in Model.TCRoster.PlayersOnRoster.Where(o => o.Value.PORPosition == "WR").OrderByDescending(o => o.Value.PORValue))
+                                {
+                                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                                    @player.Value.PORValue <br />
+                                }
+                                <br />
+                            </div>
+                        }
+
+                        <div class="position-rankings">TE Ranking: @Model.TCRoster.TERanking <text> - </text>@Model.TCRoster.TERankingAverage </div> <br />
+                        if (tcTEadv == 1)
+                        {
+                            <div class="greenPlayerText">
+                                @foreach (var player in Model.TCRoster.PlayersOnRoster.Where(o => o.Value.PORPosition == "TE").OrderByDescending(o => o.Value.PORValue))
+                                {
+                                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                                    @player.Value.PORValue <br />
+                                }
+                                <br />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="redPlayerText">
+                                @foreach (var player in Model.TCRoster.PlayersOnRoster.Where(o => o.Value.PORPosition == "TE").OrderByDescending(o => o.Value.PORValue))
+                                {
+                                    @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                                    @player.Value.PORValue <br />
+                                }
+                                <br />
+                            </div>
+                        }
+                        <text>Total Advantage: @Model.TCRoster.TotalCandidateAdvantage</text><br />
+                        <text>Total Disadvantage: @Model.TCRoster.TotalCandidateDisadvantage</text><br />
+                        <text>Total Disparity: @Model.TCRoster.TotalDisparity</text><br />
+
+                    }
+                </div>
+            }
+        </div>
+    </body>

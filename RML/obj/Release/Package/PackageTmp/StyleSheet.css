@@ -1,0 +1,192 @@
+﻿.infobox-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    background-color: #3A465B;
+    border-radius: 10px;
+}
+
+.infobox-child {
+    /**flex: 1;
+    float: left;
+    border: 2px #00CEB8;
+    background-color: #3A465B;
+    flex: 1 1 calc(33% - 2em)
+
+    */
+    overflow: hidden;
+    width: 95%;
+    font-family: Roboto;
+    font-size: 18px;
+    padding: 20px;
+    border-radius: 10px;
+}  
+
+
+.rostersParent {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+
+}
+
+#roster {
+    color: #FFFFFF;
+    float: left;
+    padding: 15px;
+    background-color: #283245;
+    width: 275px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    border-radius: 10px;
+    font-family: Roboto;
+}
+
+#rosterBold {
+    color: #FFFFFF;
+    font-family: Roboto;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+#bold{
+    font-weight:bold;
+}
+
+.homePage {
+    color:white;
+    align-content:center;
+    text-align: center;
+}
+
+.whiteText{
+    color:white;
+}
+
+.form-group{
+    align-content:center;
+}
+
+.darkBackground{
+    margin:0;
+    height:100%;
+    width:100%;
+    background-color:#18202F;
+}
+
+.position-rankings {
+    font-weight: bold;
+    align-content: center;
+    font-family: Roboto;
+    font-size: 20px;
+}
+
+.greenPlayerText{
+    color:lightgreen;
+}
+
+.redPlayerText{
+    color:red;
+}
+
+.leagueBody {
+    background-color: #18202F;
+    width: 100vw;
+    display: block;
+}
+
+.noScrollRoster {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    color: #FFFFFF;
+    float: left;
+    padding: 15px;
+    background-color: #283245;
+    width:275px;
+    margin-bottom:10px;
+    overflow:hidden;
+    border-radius:10px;
+    font-family:Roboto;
+}
+
+.tradebreakdownParent {
+
+}
+
+.tradebreakdownRoster {
+    color: #FFFFFF;
+    float: left;
+    padding: 15px;
+    background-color: #283245;
+    width: 275px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    border-radius: 10px;
+    font-family: Roboto;
+}
+
+.bigGap {
+    padding: 150px;
+}
+
+.littleGap {
+    padding: 15px;
+}
+
+.alignCenter{
+    align-content:center;
+}
+
+.homePageP{
+    align-content:center;
+    word-wrap:normal;
+    font-size:18px;
+    width:300px;
+}
+
+h6 {
+    color: #00CEB8;
+    font-size:36px;
+}
+
+.sleeperID {
+    background-color: #3A465B;
+    padding-top: 50px;
+    padding-bottom: 50px;
+    left: 0;
+    right: 0;
+    border-radius: 10px;
+}
+
+.btn btn-info {
+    background-color: #00CEB8;
+}
+
+.sleeperIDField {
+    font-size: 20px;
+    font-family: Roboto;
+    position: relative;
+}
+
+a {
+    color: #00CEB8;
+}
+
+.legend{
+    align-content:center;
+    font-size:18px;
+    color:white;
+    padding-bottom:10px;
+    padding-top:10px;
+    width:200px;
+    margin:0 auto;
+}
+
+@media screen and (max-width: 600px) {
+
+    .hideIfSmol {
+        display: none;
+    }
+}

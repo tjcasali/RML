@@ -1,0 +1,94 @@
+﻿@model RML.ViewModels.DisplayLeagueViewModel
+
+<link href="~/StyleSheet.css" rel="stylesheet" />
+
+@{
+    int count = 0;
+    string[] rankings = { "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th", "13th", "14th", "15th", "16th", "17th", "18th", "19th", "20th", "21st", "22nd" };
+}
+<body class="leagueBody">
+    <div class="rostersParent">
+        @foreach (var roster in Model.Rosters)
+        {
+            //IF I WANT TO DO SPECIAL CSS on X ROSTERS<div class="homepageContainer" id="roster-@rosterCounter">
+        <div id="roster">
+            <div id=rosterBold>@rankings[count] : @roster.DisplayName<br /></div>
+
+            <div id=rosterBold>Team Ranking: @roster.TeamRankingAverage</div><br />
+            
+            @*@Html.ActionLink(
+                roster.DisplayName + "'s Trade Candidates",
+                "TeamBreakdown",                          // controller action
+                "Sleeper",                                // controller
+                new { leagueID = @Model.LeagueID, name = roster.DisplayName },        // action parameters aka route values
+                new { @class = "btn btn-secondary btn-sm" })
+            <br />*@
+
+            @{ 
+                int positionCounter = 0;
+            }
+
+            <div class="position-rankings">QB Ranking: @roster.QBRank <text> - </text>@roster.QBRankingAverage </div> <br />
+            @foreach (var player in roster.PlayersOnRoster.Where(o => o.Value.PORPosition == "QB").OrderByDescending(o => o.Value.PORValue))
+            {
+                @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                @player.Value.PORValue <br />
+
+                positionCounter++;
+                if(positionCounter == Model.UserInfo.QBCount)
+                {
+                    positionCounter = 0;
+                    break;
+                }
+            }
+            <br />
+            <div class="position-rankings">RB Ranking: @roster.RBRank <text> - </text>@roster.RBRankingAverage </div> <br />
+            @foreach (var player in roster.PlayersOnRoster.Where(o => o.Value.PORPosition == "RB").OrderByDescending(o => o.Value.PORValue))
+            {
+                @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                @player.Value.PORValue <br />
+
+                positionCounter++;
+                if (positionCounter == Model.UserInfo.RBCount)
+                {
+                    positionCounter = 0;
+                    break;
+                }
+            }
+            <br />
+            <div class="position-rankings">WR Ranking: @roster.WRRank <text> - </text>@roster.WRRankingAverage </div> <br />
+            @foreach (var player in roster.PlayersOnRoster.Where(o => o.Value.PORPosition == "WR").OrderByDescending(o => o.Value.PORValue))
+            {
+                @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                @player.Value.PORValue <br />
+
+                positionCounter++;
+                if (positionCounter == Model.UserInfo.WRCount)
+                {
+                    positionCounter = 0;
+                    break;
+                }
+            }
+            <br />
+            <div class="position-rankings">TE Ranking: @roster.TERank <text> - </text>@roster.TERankingAverage </div> <br />
+            @foreach (var player in roster.PlayersOnRoster.Where(o => o.Value.PORPosition == "TE").OrderByDescending(o => o.Value.PORValue))
+            {
+                @player.Value.PORName<text> (</text>@player.Value.PORPosition<text>) :</text>
+                @player.Value.PORValue <br />
+
+                positionCounter++;
+                if (positionCounter == Model.UserInfo.TECount)
+                {
+                    positionCounter = 0;
+                    break;
+                }
+            }
+            @{
+                count++;
+            }
+        </div>
+        }
+
+    </div>
+</body>
+

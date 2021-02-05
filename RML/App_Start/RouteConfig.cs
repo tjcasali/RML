@@ -14,15 +14,15 @@ namespace RML
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
-            routes.MapRoute(
-                "DisplayLeague",
-                "Sleeper/DisplayLeague/{leagueID}",
-                new { controller = "Sleeper", action = "DisplayLeague" });
+            //routes.MapRoute(
+            //    "DisplayLeague",
+            //    "Sleeper/DisplayLeague/{leagueID}",
+            //    new { controller = "Sleeper", action = "DisplayLeague" });
 
-            routes.MapRoute(
-                "TeamBreakdown",
-                "Sleeper/TeamBreakdown/{leagueID}/{name}",
-                new { controller = "Sleeper", action = "TeamBreakdown" });            
+            //routes.MapRoute(
+            //    "TeamBreakdown",
+            //    "Sleeper/TeamBreakdown/{leagueID}/{name}",
+            //    new { controller = "Sleeper", action = "TeamBreakdown" });            
 
             routes.MapRoute(
                 name: "Default",
