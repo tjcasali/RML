@@ -30,6 +30,8 @@ namespace RML.Models
         public string TradeValueChart { get; set; }
 
         public string KeepTradeCutValue { get; set; }
+
+        public string WeekAgoValue { get; set; }
     }
 
     public class Players

@@ -1,54 +1,62 @@
 ﻿.infobox-container {
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: space-between;
     flex-wrap: wrap;
     background-color: #3A465B;
     border-radius: 10px;
 }
 
 .infobox-child {
-    /**flex: 1;
-    float: left;
-    border: 2px #00CEB8;
-    background-color: #3A465B;
-    flex: 1 1 calc(33% - 2em)
-
-    */
-    overflow: hidden;
+    color:white;
     width: 95%;
-    font-family: Roboto;
+    font-family: Arial;
     font-size: 18px;
-    padding: 20px;
+    padding: 40px 20px 20px 20px;
+    border-radius: 10px;
+}
+
+.infobox2-child {
+    color: white;
+    width: 95%;
+    font-family: Arial;
+    font-size: 18px;
+    padding: 10px 20px 10px 20px;
     border-radius: 10px;
 }  
-
 
 .rostersParent {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-around;
-
 }
 
 #roster {
     color: #FFFFFF;
     float: left;
-    padding: 15px;
+    padding: 10px;
     background-color: #283245;
-    width: 275px;
+    width: 272px;
     margin-bottom: 10px;
-    overflow: hidden;
     border-radius: 10px;
-    font-family: Roboto;
+    font-family: Arial;
+    font-size:15px;
 }
 
 #rosterBold {
     color: #FFFFFF;
-    font-family: Roboto;
+    font-family: Arial;
     font-weight: bold;
-    font-size: 24px;
+    font-size: 20px;
+}
+
+#rosterBoldCenter {
+    color: #FFFFFF;
+    font-family: Arial;
+    font-weight: bold;
+    font-size: 20px;
+    text-align:center;
 }
 
 #bold{
@@ -79,8 +87,8 @@
 .position-rankings {
     font-weight: bold;
     align-content: center;
-    font-family: Roboto;
-    font-size: 20px;
+    font-family: Arial;
+    font-size: 18px;
 }
 
 .greenPlayerText{
@@ -106,9 +114,8 @@
     background-color: #283245;
     width:275px;
     margin-bottom:10px;
-    overflow:hidden;
     border-radius:10px;
-    font-family:Roboto;
+    font-family:Arial;
 }
 
 .tradebreakdownParent {
@@ -122,9 +129,8 @@
     background-color: #283245;
     width: 275px;
     margin-bottom: 10px;
-    overflow: hidden;
     border-radius: 10px;
-    font-family: Roboto;
+    font-family: Arial;
 }
 
 .bigGap {
@@ -137,6 +143,7 @@
 
 .alignCenter{
     align-content:center;
+    text-align:center;
 }
 
 .homePageP{
@@ -166,7 +173,7 @@ h6 {
 
 .sleeperIDField {
     font-size: 20px;
-    font-family: Roboto;
+    font-family: Arial;
     position: relative;
 }
 
@@ -178,7 +185,6 @@ a {
     align-content:center;
     font-size:18px;
     color:white;
-    padding-bottom:10px;
     padding-top:10px;
     width:200px;
     margin:0 auto;
@@ -189,4 +195,25 @@ a {
     .hideIfSmol {
         display: none;
     }
+}
+
+footer {
+    color: white;
+    padding: 25px 0 2px 0;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.boldText {
+    font-size: 20px;
+    color: #00CEB8;
+}
+
+.darkGray{
+    color:darkgray;
+    display:inline;
+}
+
+h1{
+    font-family:Arial;
 }

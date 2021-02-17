@@ -22,6 +22,8 @@ namespace RML.Controllers
         public Dictionary<string, PlayerData> playerList = new Dictionary<string, PlayerData>();
         public List<KeepTradeCut> keepTradeCutList = new List<KeepTradeCut>();
         public UserInfo leagueInformation = new UserInfo();
+        public List<TradedPick> tradedPicks = new List<TradedPick>();
+        public string lastScrapeDate;
 
         // GET: Sleeper
         public ActionResult Index()
@@ -42,6 +44,7 @@ namespace RML.Controllers
                     sleeperUsers = await GetUsers(leagueID);
                     sleeperRosters = await GetRosters(leagueID);
                     playerList = GetPlayers();
+                    tradedPicks = await GetTradedDraftPicks(leagueID);
                 }
                 catch
                 {
@@ -55,9 +58,15 @@ namespace RML.Controllers
 
             LinkUsersAndRosters(sleeperUsers, sleeperRosters);
 
+            lastScrapeDate = GetPreviousScrapeDate(lastScrapeDate);
+
             //LoadSleeperPlayersTextFile();
 
             //keepTradeCutList = ScrapeRankings(playerList);
+
+            ScrapeRankings(lastScrapeDate);
+
+            ScrapeSFRankings(lastScrapeDate);
 
             playerList = LoadRankings(playerList, keepTradeCutList, leagueInformation);
 
@@ -73,24 +82,11 @@ namespace RML.Controllers
 
             OrderStartingLineupRanking(sleeperRosters);
 
-            foreach(var ros in sleeperRosters)
-            {
-                System.Diagnostics.Debug.WriteLine("Starting");
-                foreach(var player in ros.StartingPlayerList)
-                {
-                    System.Diagnostics.Debug.WriteLine(player);
-                }
-                System.Diagnostics.Debug.WriteLine("FLEX");
-                foreach (var player in ros.StartingFlexList)
-                {
-                    System.Diagnostics.Debug.WriteLine(player);
-                }
-            }
-
             var viewModel = new DisplayLeagueViewModel
             {
                 Rosters = sleeperRosters,
-                UserInfo = leagueInformation
+                UserInfo = leagueInformation,
+                LastScrapeDate = lastScrapeDate
             };
 
             return View(viewModel);
@@ -180,9 +176,6 @@ namespace RML.Controllers
         public static async Task<List<SleeperUsers>> GetUsers(string leagueID)
         {
             HttpClient client = new HttpClient();
-
-            //string leagueID = "515558249940426752";
-
             HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/users");
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
@@ -197,10 +190,6 @@ namespace RML.Controllers
         {
 
             HttpClient client = new HttpClient();
-
-            //My roster ID: 325829344368812032
-            //string leagueID = "515558249940426752";
-            
             HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/rosters");
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
@@ -208,6 +197,22 @@ namespace RML.Controllers
             List<Rosters> rosters = JsonConvert.DeserializeObject<List<Rosters>>(responseBody);
 
             return rosters;
+        }
+
+        public static async Task<List<TradedPick>> GetTradedDraftPicks(string leagueID)
+        {
+
+            HttpClient client = new HttpClient();
+
+            //My roster ID: 325829344368812032
+
+            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/traded_picks");
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            List<TradedPick> tradedPicks = JsonConvert.DeserializeObject<List<TradedPick>>(responseBody);
+
+            return tradedPicks;
         }
 
         public async void LoadSleeperPlayersTextFile()
@@ -238,6 +243,26 @@ namespace RML.Controllers
         {
             foreach (Rosters ros in rosters)
             {
+                ros.DraftPicks.Add("2021 1st");
+                ros.DraftPicks.Add("2021 2nd");
+                ros.DraftPicks.Add("2021 3rd"); 
+                ros.DraftPicks.Add("2021 4th");
+                ros.DraftPicks.Add("2022 1st");
+                ros.DraftPicks.Add("2022 2nd");
+                ros.DraftPicks.Add("2022 3rd");
+                ros.DraftPicks.Add("2022 4th");
+                ros.DraftPicks.Add("2023 1st");
+                ros.DraftPicks.Add("2023 2nd");
+                ros.DraftPicks.Add("2023 3rd");
+                ros.DraftPicks.Add("2023 4th");
+                ros.DraftPicks.Add("2024 1st");
+                ros.DraftPicks.Add("2024 2nd");
+                ros.DraftPicks.Add("2024 3rd");
+                ros.DraftPicks.Add("2024 4th");
+                ros.DraftPicks.Add("2025 1st");
+                ros.DraftPicks.Add("2025 2nd");
+                ros.DraftPicks.Add("2025 3rd");
+                ros.DraftPicks.Add("2025 4th");
                 foreach (SleeperUsers su in users)
                 {
                     if (su.UserID == ros.OwnerID)
@@ -290,6 +315,8 @@ namespace RML.Controllers
             }
         }
         #endregion
+
+        #region Ranking Functions
 
         public Dictionary<string, PlayerData> LoadRankings(Dictionary<string, PlayerData> players, List<KeepTradeCut> ktc, UserInfo leagueInfo)
         {
@@ -366,7 +393,7 @@ namespace RML.Controllers
                             //System.Diagnostics.Debug.WriteLine("TESTING PLAYER: " + currentPlayer.FirstName + " " + currentPlayer.LastName + ": " + currentPlayer.KeepTradeCutValue);
                             //totalTemp = totalTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
                             totalTemp = totalTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
-                            
+
                             if (currentPlayer.Position.Contains("QB"))
                             {
                                 qbTemp = qbTemp + Convert.ToDouble(currentPlayer.KeepTradeCutValue);
@@ -446,6 +473,337 @@ namespace RML.Controllers
             }
             return null;
         }
+        public string GetPreviousScrapeDate(string date)
+        {
+            string path = Server.MapPath("~/Data/LastScrapeDate.txt");
+            date = System.IO.File.ReadAllText(path);
+
+            return date;
+        }
+
+        public void ScrapeRankings(string previousScrapeDate)
+        {
+            string newScrapeDate = DateTime.Now.ToString("MM-dd-yyyy");
+
+            if (previousScrapeDate != newScrapeDate)
+            {
+                string url = "https://keeptradecut.com/dynasty-rankings?page=0&filters=QB|WR|RB|TE|RDP&format=1";
+
+                HtmlAgilityPack.HtmlWeb web = new HtmlAgilityPack.HtmlWeb();
+                HtmlAgilityPack.HtmlDocument doc = web.Load(url);
+
+                var nameTable = doc.DocumentNode.SelectNodes("//div[@class='player-name']");
+                var valueTable = doc.DocumentNode.SelectNodes("//div[@class='value']");
+                var positionTeamTable = doc.DocumentNode.SelectNodes("//div[@class='position-team']");
+
+
+                List<string> nameList = new List<string>();
+                List<string> valueList = new List<string>();
+                List<string> positionList = new List<string>();
+                List<string> teamList = new List<string>();
+
+                string temp, positionTemp, teamTemp = "";
+                int tempSize = 0;
+
+                foreach (var name in nameTable.Skip(1))
+                {
+                    temp = name.InnerText;
+                    temp = temp.Trim();
+                    temp = temp.Replace("//n", "");
+                    tempSize = temp.Length;
+                    if (temp.EndsWith("FA"))
+                    {
+                        teamTemp = temp.Substring(temp.Length - 2);
+                        temp = temp.Substring(0, tempSize - 2);
+                        tempSize = temp.Length;
+                        teamList.Add(teamTemp);
+                    }
+                    else
+                    {
+                        teamTemp = temp.Substring(temp.Length - 3);
+                        temp = temp.Substring(0, tempSize - 3);
+                        tempSize = temp.Length;
+                        teamList.Add(teamTemp);
+                    }
+                    if (temp.EndsWith("R"))
+                    {
+                        temp = temp.Substring(0, tempSize - 1);
+                        temp = temp.Trim();
+                        temp = temp.Replace("\\n", "");
+                    }
+                    if (temp.Contains("Jr."))
+                    {
+                        temp = temp.Replace("Jr.", "");
+                        temp = temp.Trim();
+                    }
+                    if (temp.Contains("."))
+                    {
+                        temp = temp.Replace(".", String.Empty);
+                    }
+                    if (temp.Contains("&#x27;"))
+                    {
+                        temp = temp.Replace("&#x27;", "'");
+                    }
+                    if (temp.Contains("Lamical"))
+                        temp = "La'Mical Perine";
+                    if (temp.Contains("JaMycal"))
+                        temp = "Jamycal Hasty";
+                    if (temp.Contains("Herndon"))
+                        temp = "Christopher Herndon";
+                    nameList.Add(temp);
+                }
+                foreach (var value in valueTable.Skip(1))
+                {
+                    temp = value.InnerText;
+                    temp = temp.Trim();
+                    temp = temp.Replace("//n", "");
+                    valueList.Add(temp);
+                }
+                foreach (var positionteam in positionTeamTable.Skip(1))
+                {
+                    temp = positionteam.InnerText;
+                    temp = temp.Trim();
+                    temp = temp.Replace("//n", "");
+
+                    positionTemp = temp.Substring(0, 2);
+                    if (positionTemp == "RD")
+                        positionTemp = "NA";
+
+                    temp = temp.Remove(0, 3);
+
+                    teamTemp = temp;
+
+                    positionList.Add(positionTemp);
+                }
+
+
+                string tempName, tempValue, tempPosition, tempTeam;
+                int count = 0;
+                List<Player> ktcList = new List<Player>();
+
+                Player newKtc = new Player();
+
+                foreach (var p in nameList)
+                {
+                    newKtc = new Player();
+                    tempName = p;
+                    if (valueList.ElementAt(count) != null)
+                    {
+                        tempValue = valueList.ElementAt(count);
+                    }
+                    else
+                    {
+                        tempValue = "NA";
+                    }
+                    if (teamList.ElementAt(count) != null)
+                    {
+                        tempTeam = teamList.ElementAt(count);
+                    }
+                    else
+                    {
+                        tempTeam = "NA";
+                    }
+                    if (positionList.ElementAt(count) != null)
+                    {
+                        tempPosition = positionList.ElementAt(count);
+                    }
+                    else
+                    {
+                        tempPosition = "NA";
+                    }
+                    newKtc.Name = tempName;
+                    newKtc.Value = tempValue;
+                    newKtc.Position = tempPosition;
+                    newKtc.Team = tempTeam;
+
+                    ktcList.Add(newKtc);
+
+                    count++;
+                }
+
+                string path = Server.MapPath("~/Data/KTCScrape.csv");
+                //string fileName = "C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\KTCScrape.csv";
+                string newLine = "";
+
+                System.IO.File.WriteAllText(path, String.Empty);
+                foreach (var p in ktcList)
+                {
+                    newLine = "";
+                    newLine = p.Name + "," + p.Position + "," + p.Team + "," + p.Value + Environment.NewLine;
+                    System.IO.File.AppendAllText(path, newLine);
+                }
+
+                //string filename = "C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\LastScrapeDate.txt";
+                string data = Server.MapPath("~/Data/LastScrapeDate.txt");
+                System.IO.File.WriteAllText(data, newScrapeDate);
+            }
+            //return newScrapeDate;
+        }
+
+        public void ScrapeSFRankings(string previousScrapeDate)
+        {
+            string newScrapeDate = DateTime.Now.ToString("MM-dd-yyyy");
+
+            if (previousScrapeDate != newScrapeDate)
+            {
+                string url = "https://keeptradecut.com/dynasty-rankings?format=2";
+
+                HtmlAgilityPack.HtmlWeb web = new HtmlAgilityPack.HtmlWeb();
+                HtmlAgilityPack.HtmlDocument doc = web.Load(url);
+
+                var nameTable = doc.DocumentNode.SelectNodes("//div[@class='player-name']");
+                var valueTable = doc.DocumentNode.SelectNodes("//div[@class='value']");
+                var positionTeamTable = doc.DocumentNode.SelectNodes("//div[@class='position-team']");
+
+
+                List<string> nameList = new List<string>();
+                List<string> valueList = new List<string>();
+                List<string> positionList = new List<string>();
+                List<string> teamList = new List<string>();
+
+                string temp, positionTemp, teamTemp = "";
+                int tempSize = 0;
+
+                foreach (var name in nameTable.Skip(1))
+                {
+                    temp = name.InnerText;
+                    temp = temp.Trim();
+                    temp = temp.Replace("//n", "");
+                    tempSize = temp.Length;
+                    if (temp.EndsWith("FA"))
+                    {
+                        teamTemp = temp.Substring(temp.Length - 2);
+                        temp = temp.Substring(0, tempSize - 2);
+                        tempSize = temp.Length;
+                        teamList.Add(teamTemp);
+                    }
+                    else
+                    {
+                        teamTemp = temp.Substring(temp.Length - 3);
+                        temp = temp.Substring(0, tempSize - 3);
+                        tempSize = temp.Length;
+                        teamList.Add(teamTemp);
+                    }
+                    if (temp.EndsWith("R"))
+                    {
+                        temp = temp.Substring(0, tempSize - 1);
+                        temp = temp.Trim();
+                        temp = temp.Replace("\\n", "");
+                    }
+                    if (temp.Contains("Jr."))
+                    {
+                        temp = temp.Replace("Jr.", "");
+                        temp = temp.Trim();
+                    }
+                    if (temp.Contains("."))
+                    {
+                        temp = temp.Replace(".", String.Empty);
+                    }
+                    if (temp.Contains("&#x27;"))
+                    {
+                        temp = temp.Replace("&#x27;", "'");
+                    }
+                    if (temp.Contains("Lamical"))
+                    {
+                        temp = "La'Mical Perine";
+                    }
+                    if (temp.Contains("JaMycal"))
+                    {
+                        temp = "Jamycal Hasty";
+                    }
+                    if (temp.Contains("Irv Smith"))
+                    {
+                        temp = "Irv Smith";
+                    }
+                    nameList.Add(temp);
+                }
+                foreach (var value in valueTable.Skip(1))
+                {
+                    temp = value.InnerText;
+                    temp = temp.Trim();
+                    temp = temp.Replace("//n", "");
+                    valueList.Add(temp);
+                }
+                foreach (var positionteam in positionTeamTable.Skip(1))
+                {
+                    temp = positionteam.InnerText;
+                    temp = temp.Trim();
+                    temp = temp.Replace("//n", "");
+
+                    positionTemp = temp.Substring(0, 2);
+                    if (positionTemp == "RD")
+                        positionTemp = "NA";
+
+                    temp = temp.Remove(0, 3);
+
+                    teamTemp = temp;
+
+                    positionList.Add(positionTemp);
+                }
+
+
+                string tempName, tempValue, tempPosition, tempTeam;
+                int count = 0;
+                List<Player> ktcList = new List<Player>();
+
+                Player newKtc = new Player();
+
+                foreach (var p in nameList)
+                {
+                    newKtc = new Player();
+                    tempName = p;
+                    if (valueList.ElementAt(count) != null)
+                    {
+                        tempValue = valueList.ElementAt(count);
+                    }
+                    else
+                    {
+                        tempValue = "NA";
+                    }
+                    if (teamList.ElementAt(count) != null)
+                    {
+                        tempTeam = teamList.ElementAt(count);
+                    }
+                    else
+                    {
+                        tempTeam = "NA";
+                    }
+                    if (positionList.ElementAt(count) != null)
+                    {
+                        tempPosition = positionList.ElementAt(count);
+                    }
+                    else
+                    {
+                        tempPosition = "NA";
+                    }
+                    newKtc.Name = tempName;
+                    newKtc.Value = tempValue;
+                    newKtc.Position = tempPosition;
+                    newKtc.Team = tempTeam;
+
+                    ktcList.Add(newKtc);
+
+                    count++;
+                }
+
+                //string fileName = "C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\KTCScrapeSF.csv";
+                string path = Server.MapPath("~/Data/KTCScrapeSF.csv");
+                string newLine = "";
+
+                System.IO.File.WriteAllText(path, String.Empty);
+                foreach (var p in ktcList)
+                {
+                    newLine = "";
+                    newLine = p.Name + "," + p.Position + "," + p.Team + "," + p.Value + Environment.NewLine;
+                    System.IO.File.AppendAllText(path, newLine);
+                }
+
+                string data = Server.MapPath("~/Data/LastScrapeDate.txt");
+                //string filename = "C:\\Users\\timca\\source\\repos\\RML\\RML\\Data\\LastScrapeDate.txt";
+                System.IO.File.WriteAllText(data, newScrapeDate);
+            }
+            //return newScrapeDate;
+        }
 
         public List<Rosters> SortRostersByRanking(List<Rosters> rosters)
         {
@@ -457,13 +815,13 @@ namespace RML.Controllers
         {
             List<Rosters> sortedRosters = rosters.OrderByDescending(o => o.TeamStartingTotal).ToList();
             int count = 0;
-            foreach(var ros in sortedRosters)
+            foreach (var ros in sortedRosters)
             {
                 count++;
 
                 ros.StartingTeamRank = count;
             }
-            
+
         }
 
         public List<Rosters> RankStartingLineups(List<Rosters> rosters, UserInfo leagueInfo)
@@ -491,7 +849,7 @@ namespace RML.Controllers
                     skippedPlayerNames.Add(player.Value.PORName);
                     startingPlayerNames.Add(player.Value.PORName);
                     positionCounter++;
-                    if(positionCounter == leagueInfo.QBCount)
+                    if (positionCounter == leagueInfo.QBCount)
                     {
                         startingQBTotal += player.Value.PORValue;
                         positionCounter = 0;
@@ -596,7 +954,7 @@ namespace RML.Controllers
                             startingFLEXTotal += player.Value.PORValue;
                         }
                     }
-                    
+
                 }
 
 
@@ -627,7 +985,7 @@ namespace RML.Controllers
 
             rankedRosters = rosters.OrderByDescending(o => o.QBRankingAverage).ToList();
             int count = 1;
-            foreach(var ros in rankedRosters)
+            foreach (var ros in rankedRosters)
             {
                 ros.QBRank = count;
                 count++;
@@ -660,6 +1018,8 @@ namespace RML.Controllers
             return rankedRosters;
         }
 
+        #endregion
+
         public List<Rosters> FindTradeTargets(List<Rosters> rosters)
         {
             var tempRoster = rosters.Find(x => x.SelectedRoster == 1);
@@ -673,7 +1033,7 @@ namespace RML.Controllers
 
             foreach (var ros in rosters)
             {
-                
+
                 if (ros.RosterID != tempRoster.RosterID)
                 {
                     qbAdv = false;
@@ -707,144 +1067,24 @@ namespace RML.Controllers
             return rosters;
         }
 
+        public List<Rosters> TradedDraftPicks(List<Rosters> rosters, List<TradedPick> tp)
+        {
+            /**TODO
+             * So TradedPick has Season Round Roster ID Previous Owner ID and Owner ID. 
+             * Add Wins and Losses to TradedPick or do a compare on wins and losses and assign an Early Middle Late as a string in Traded Pick
+             * If they traded a pick that they don't have check the rest of the picks for the owner ID?
+             * wins and losses are zero already but record has previous years WL record
+             * Maybe just ask them to import their draft ID?
+             * 
+             * JJJJJKKKK, Get all Drafts for League, get Draft ID, gives draft order and number of rounds
+             **/
+
+
+
+            return rosters;
+        }
 
         #region COMMENTED OUT FUNCTIONS
-        //public List<KeepTradeCut> ScrapeRankings(Dictionary<string, PlayerData> players)
-        //{
-        //    string url = "https://keeptradecut.com/dynasty-rankings?page=0&filters=QB|WR|RB|TE|RDP&format=1";
-
-        //    HtmlAgilityPack.HtmlWeb web = new HtmlAgilityPack.HtmlWeb();
-        //    HtmlAgilityPack.HtmlDocument doc = web.Load(url);
-
-        //    var nameTable = doc.DocumentNode.SelectNodes("//div[@class='player-name']");
-        //    var valueTable = doc.DocumentNode.SelectNodes("//div[@class='value']");
-        //    var positionTeamTable = doc.DocumentNode.SelectNodes("//div[@class='position-team']");
-
-
-        //    List<string> nameList = new List<string>();
-        //    List<string> valueList = new List<string>();
-        //    List<string> positionList = new List<string>();
-        //    List<string> teamList = new List<string>();
-
-        //    string temp, positionTemp, teamTemp = "";
-        //    int tempSize = 0;
-
-        //    foreach (var name in nameTable.Skip(1))
-        //    {
-        //        temp = name.InnerText;
-        //        temp = temp.Trim();
-        //        temp = temp.Replace("//n", "");
-        //        tempSize = temp.Length;
-        //        System.Diagnostics.Debug.WriteLine(temp);
-        //        if (temp.EndsWith("R"))
-        //        {
-        //            temp = temp.Substring(0, tempSize - 1);
-        //            temp = temp.Trim();
-        //            temp = temp.Replace("\\n", "");
-        //        }
-        //        if (temp.Contains("."))
-        //        {
-        //            temp = temp.Replace(".", String.Empty);
-        //        }
-        //        if (temp.Contains("&#x27;"))
-        //        {
-        //            temp = temp.Replace("&#x27;", "'");
-        //        }
-        //        if (temp.Contains("Jr."))
-        //        {
-        //            temp = temp.Replace("Jr.", "");
-        //        }
-        //        if (temp.Contains("Lamical"))
-        //        {
-        //            temp = "La'Mical Perine";
-        //        }
-        //        if (temp.Contains("JaMycal"))
-        //        {
-        //            temp = "Jamycal Hasty";
-        //        }
-        //        nameList.Add(temp);
-        //    }
-        //    foreach (var value in valueTable.Skip(1))
-        //    {
-        //        temp = value.InnerText;
-        //        temp = temp.Trim();
-        //        temp = temp.Replace("//n", "");
-        //        valueList.Add(temp);
-        //    }
-        //    foreach (var positionteam in positionTeamTable.Skip(1))
-        //    {
-        //        temp = positionteam.InnerText;
-        //        temp = temp.Trim();
-        //        temp = temp.Replace("//n", "");
-
-        //        positionTemp = temp.Substring(0, 2);
-        //        if (positionTemp == "RD")
-        //            positionTemp = "NA";
-
-        //        temp = temp.Remove(0, 3);
-
-        //        teamTemp = temp;
-
-        //        teamList.Add(teamTemp);
-        //        positionList.Add(positionTemp);
-        //    }
-
-
-        //    string tempName, tempValue, tempPosition, tempTeam;
-        //    int count = 0;
-        //    List<Players> ktcList = new List<Players>();
-
-        //    Players newKtc = new Players();
-
-        //    foreach (var p in nameList)
-        //    {
-        //        newKtc = new Players();
-        //        tempName = p;
-        //        if (valueList.ElementAt(count) != null)
-        //        {
-        //            tempValue = valueList.ElementAt(count);
-        //        }
-        //        else
-        //        {
-        //            tempValue = "NA";
-        //        }
-        //        if (teamList.ElementAt(count) != null)
-        //        {
-        //            tempTeam = teamList.ElementAt(count);
-        //        }
-        //        else
-        //        {
-        //            tempTeam = "NA";
-        //        }
-        //        if (positionList.ElementAt(count) != null)
-        //        {
-        //            tempPosition = positionList.ElementAt(count);
-        //        }
-        //        else
-        //        {
-        //            tempPosition = "NA";
-        //        }
-        //        newKtc.Player = tempName;
-        //        newKtc.Value = tempValue;
-        //        newKtc.Position = tempPosition;
-        //        newKtc.Team = tempTeam;
-
-        //        ktcList.Add(newKtc);
-
-        //        count++;
-        //    }
-
-        //    string fileName = "C:\\Users\\timca\\source\\repos\\RML\\RML\\KTCScrape.csv";
-        //    string newLine = "";
-
-        //    System.IO.File.WriteAllText(fileName, String.Empty);
-        //    foreach (var p in ktcList)
-        //    {
-        //        newLine = "";
-        //        newLine = p.Name + "," + p.Position + "," + p.Team + "," + p.Value + Environment.NewLine;
-        //        System.IO.File.AppendAllText(fileName, newLine);
-        //    }
-        //}
 
         //public Dictionary<string, PlayerData> LoadRankings(Dictionary<string, PlayerData> players, List<KeepTradeCut> ktc)
         //{
@@ -972,3 +1212,4 @@ namespace RML.Controllers
         #endregion
     }
 }
+

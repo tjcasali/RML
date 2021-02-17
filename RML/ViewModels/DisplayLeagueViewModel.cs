@@ -12,5 +12,7 @@ namespace RML.ViewModels
         public string LeagueID { get; set; }
 
         public UserInfo UserInfo {get; set;}
+
+        public string LastScrapeDate { get; set; }
     }
 }

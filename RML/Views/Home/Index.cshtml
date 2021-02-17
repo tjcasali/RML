@@ -2,31 +2,9 @@
 
 <link href="~/StyleSheet.css" rel="stylesheet" />
 
-<body style="background-color:#18202F;" >
+<body style="background-color:#18202F;">
 
     <div class="homePage">
-
-        <div class="littleGap"></div>
-
-        <div class="infobox-container">
-
-            <div class="infobox-child">
-                <h6>Rank the teams in your league</h6><br/>
-                <p>
-                    The team over at <a href="https://keeptradecut.com/">KeepTradeCut.com</a> has an incredible system to determine player trade values based on crowdsourced data.
-                    Here at DynastyRanker you can rank the teams in your league based on the trade values and find a trade proposal that can help improve all of the teams involved.
-                </p><br />
-            </div>
-
-            @*<div class="infobox-child">
-                <h6>Send trades that will get accepted.</h6>
-                <p>
-                    Sometimes it can seem impossible to send trades that will get accepted even if the value lines up, hopefully we can help.
-                    Click to view your team's trade candidates and send trades that will improve the other owner's team as well as yours.
-                </p><br />
-            </div>*@
-
-        </div>
 
         <div class="littleGap"></div>
 
@@ -38,7 +16,22 @@
                 @Html.TextBoxFor(m => m.LeagueID, new { @class = "sleeperIDField" })
                 <button type="submit" class="btn btn-info">Submit</button>
             }
+            <img alt="Sleeper ID" src="@Url.Content("~/Images/SleeperLeagueID.png")" class="hideIfSmol">
         </div>
+
+        <div class="littleGap"></div>
+
+        <div class="infobox-container">
+
+            <div class="infobox-child">
+                <h1>Rank the teams in your league</h1><br />
+                <p>
+                    My favorite trade value chart is over at <a href="https://keeptradecut.com/">KeepTradeCut.com</a>, they created an incredible system to determine player trade values based on crowdsourced data.
+                    Here at DynastyRanker you can rank the teams in your league using the data at KeepTradeCut and browse through your leagues position rankings to find trades that can benefit both owners.
+                </p><br />
+            </div>
+        </div>
+
         <div class="littleGap"></div>
 
         <img alt="Dynasty Ranker" src="@Url.Content("~/Images/DRHomepage6.png")" class="hideIfSmol">

@@ -24,10 +24,12 @@ namespace RML.Models
         public string OwnerID { get; set; }
 
         //[JsonProperty(PropertyName = "wins")]
-        //public string Wins { get; set; }
+        public string Wins { get; set; }
 
         //[JsonProperty(PropertyName = "losses")]
-        //public string Losses { get; set; }
+        public string Losses { get; set; }
+
+        public List<string> DraftPicks { get; set; }
 
         public string DisplayName { get; set; }
 
@@ -48,12 +50,8 @@ namespace RML.Models
         public double TEStartingTotal { get; set; }
         public double FLEXStartingTotal { get; set; }
 
-
-        public double TeamStarting { get; set; }
-        public double QBStarting { get; set; }
-        public double RBStarting { get; set; }
-        public double WRStarting { get; set; }
-        public double TEStarting { get; set; }
+        public double WeekAgoTeamStarting { get; set; }
+        public double WeekAgoTeamTotal { get; set; }
 
         public int StartingTeamRank { get; set; }
 
@@ -68,7 +66,6 @@ namespace RML.Models
 
 
         public List<string> TradeCandidates { get; set; }
-
         public int TotalCandidateAdvantage { get; set; }
         public int TotalCandidateDisadvantage { get; set; }
         public int TotalDisparity { get; set; }
