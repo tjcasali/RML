@@ -13,6 +13,9 @@ namespace RML.Models
         [JsonProperty(PropertyName = "roster_positions")]
         public string[] LeagueRosterPositions { get; set; }
 
+        [JsonProperty(PropertyName = "total_rosters")]
+        public int TotalRosters { get; set; }
+
         public int QBCount { get; set; }
 
         public int RBCount { get; set; }

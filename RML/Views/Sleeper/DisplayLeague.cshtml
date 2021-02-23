@@ -37,9 +37,18 @@
             <p>
                 <div class="alignCenter"><text class="boldText">Team Total Rankings</text> rank the rosters by the owners that hold the most overall trade value.<br /></div>
                 <div class="alignCenter"><text class="boldText">Best Starting Lineup</text> rank your teams based on the value of the best possible starting lineup.<br /></div>
-                <div class="alignCenter">All values are determined at <a href="https://keeptradecut.com/">KeepTradeCut.com</a></div>
+                <div class="alignCenter">All values are based on 12 team/0.5 PPR, determined at <a href="https://keeptradecut.com/">KeepTradeCut.com</a></div>
                 <div class="alignCenter"><text class="boldText">Rankings Last Updated: </text>@Model.LastScrapeDate<br /><br /></div>
                 <div class="legend">&#11088; : Starters<br />&#128170; : Best Flex Options</div>
+
+                <h1>Enter your Sleeper League ID.</h1><br />
+
+                @using (Html.BeginForm("AddPreviouslyTradedDraftPicks", "Sleeper"))
+                {
+                    @Html.TextBoxFor(m => m.LeagueID)
+                    <button type="submit" class="btn btn-info">Submit</button>
+                }
+                </div>
             </p>
         </div>
     </div>
@@ -121,6 +130,16 @@
                 }
                 @player.Value.PORName <text>:</text>
                 @player.Value.PORValue <br />
+            }
+            <br />
+            <div class="position-rankings">Draft Capital: @roster.TotalDraftCapital</div>
+            @foreach (var pick in roster.DraftPicks.OrderByDescending(o => Int32.Parse(Model.DraftPickRankings[o])))
+            {
+                if (pick.Contains("2021") || pick.Contains("2022"))
+                {
+                    @pick <text>: </text>
+                    @Model.DraftPickRankings[pick]<br />
+                }
             }
             @{
                 count++;

@@ -24,6 +24,8 @@ namespace RML.Controllers
         public UserInfo leagueInformation = new UserInfo();
         public List<TradedPick> tradedPicks = new List<TradedPick>();
         public string lastScrapeDate;
+        public List<Draft> drafts = new List<Draft>();
+        public Dictionary<string, string> draftPickRankings = new Dictionary<string, string>();
 
         // GET: Sleeper
         public ActionResult Index()
@@ -45,6 +47,7 @@ namespace RML.Controllers
                     sleeperRosters = await GetRosters(leagueID);
                     playerList = GetPlayers();
                     tradedPicks = await GetTradedDraftPicks(leagueID);
+                    drafts = await GetDraftOrder(leagueID);
                 }
                 catch
                 {
@@ -56,19 +59,23 @@ namespace RML.Controllers
                 return RedirectToAction("InvalidLeagueID");
             }
 
-            LinkUsersAndRosters(sleeperUsers, sleeperRosters);
-
             lastScrapeDate = GetPreviousScrapeDate(lastScrapeDate);
 
             //LoadSleeperPlayersTextFile();
 
-            //keepTradeCutList = ScrapeRankings(playerList);
 
+            //TODO Put the if condition here so we don't even have to go into the scrape functions
             ScrapeRankings(lastScrapeDate);
-
             ScrapeSFRankings(lastScrapeDate);
 
+            LinkUsersAndRosters(sleeperUsers, sleeperRosters);
+
             playerList = LoadRankings(playerList, keepTradeCutList, leagueInformation);
+
+            AddDraftPositionToRoster(drafts, sleeperRosters);
+            sleeperRosters = AssignDraftPositionToPicks(sleeperRosters);
+            sleeperRosters = TradedDraftPicks(sleeperRosters, tradedPicks);
+            sleeperRosters = GetTotalDraftCapital(sleeperRosters, draftPickRankings);
 
             sleeperRosters = AverageTeamRanking(sleeperRosters, playerList);
 
@@ -86,10 +93,40 @@ namespace RML.Controllers
             {
                 Rosters = sleeperRosters,
                 UserInfo = leagueInformation,
-                LastScrapeDate = lastScrapeDate
+                LastScrapeDate = lastScrapeDate,
+                DraftPickRankings = draftPickRankings
             };
 
             return View(viewModel);
+        }
+
+        public async Task<ActionResult> AddPreviouslyTradedDraftPicks(string leagueID)
+        {
+            if (leagueID != String.Empty)
+            {
+                try
+                {
+                    tradedPicks = await GetPreviouslyTradedDraftPicks(leagueID, tradedPicks);
+                }
+                catch
+                {
+                    return RedirectToAction("InvalidLeagueID");
+                }
+            }
+            else
+            {
+                return RedirectToAction("InvalidLeagueID");
+            }
+
+            var viewModel = new DisplayLeagueViewModel
+            {
+                Rosters = sleeperRosters,
+                UserInfo = leagueInformation,
+                LastScrapeDate = lastScrapeDate,
+                DraftPickRankings = draftPickRankings
+            };
+
+            return View("DisplayLeague", viewModel);
         }
         public ActionResult TeamBreakdown(string leagueID, string name)
         {
@@ -102,7 +139,7 @@ namespace RML.Controllers
                 }
             }
 
-            sleeperRosters = FindTradeTargets(sleeperRosters);
+            //sleeperRosters = FindTradeTargets(sleeperRosters);
 
             var viewModel = new TeamBreakdownViewModel
             {
@@ -201,11 +238,7 @@ namespace RML.Controllers
 
         public static async Task<List<TradedPick>> GetTradedDraftPicks(string leagueID)
         {
-
             HttpClient client = new HttpClient();
-
-            //My roster ID: 325829344368812032
-
             HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/traded_picks");
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
@@ -213,6 +246,33 @@ namespace RML.Controllers
             List<TradedPick> tradedPicks = JsonConvert.DeserializeObject<List<TradedPick>>(responseBody);
 
             return tradedPicks;
+        }
+
+        public static async Task<List<TradedPick>> GetPreviouslyTradedDraftPicks(string leagueID, List<TradedPick> tp)
+        {
+            HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/traded_picks");
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            List<TradedPick> tradedPicks = JsonConvert.DeserializeObject<List<TradedPick>>(responseBody);
+
+            foreach (var pick in tradedPicks)
+                tp.Add(pick);
+
+            return tp;
+        }
+
+        public static async Task<List<Draft>> GetDraftOrder(string leagueID)
+        {
+            HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/drafts");
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            List<Draft> draft = JsonConvert.DeserializeObject<List<Draft>>(responseBody);
+
+            return draft;
         }
 
         public async void LoadSleeperPlayersTextFile()
@@ -243,26 +303,6 @@ namespace RML.Controllers
         {
             foreach (Rosters ros in rosters)
             {
-                ros.DraftPicks.Add("2021 1st");
-                ros.DraftPicks.Add("2021 2nd");
-                ros.DraftPicks.Add("2021 3rd"); 
-                ros.DraftPicks.Add("2021 4th");
-                ros.DraftPicks.Add("2022 1st");
-                ros.DraftPicks.Add("2022 2nd");
-                ros.DraftPicks.Add("2022 3rd");
-                ros.DraftPicks.Add("2022 4th");
-                ros.DraftPicks.Add("2023 1st");
-                ros.DraftPicks.Add("2023 2nd");
-                ros.DraftPicks.Add("2023 3rd");
-                ros.DraftPicks.Add("2023 4th");
-                ros.DraftPicks.Add("2024 1st");
-                ros.DraftPicks.Add("2024 2nd");
-                ros.DraftPicks.Add("2024 3rd");
-                ros.DraftPicks.Add("2024 4th");
-                ros.DraftPicks.Add("2025 1st");
-                ros.DraftPicks.Add("2025 2nd");
-                ros.DraftPicks.Add("2025 3rd");
-                ros.DraftPicks.Add("2025 4th");
                 foreach (SleeperUsers su in users)
                 {
                     if (su.UserID == ros.OwnerID)
@@ -343,6 +383,12 @@ namespace RML.Controllers
                     playerPositionList.Add(values[1]);
                     playerTeamList.Add(values[2]);
                     playerKeepTradeCutList.Add(values[3]);
+
+                    if(values[1] == "PI")
+                    {
+                        draftPickRankings.Add(values[0], values[3]);
+                    }
+
                 }
 
                 foreach (var p in players)
@@ -445,8 +491,7 @@ namespace RML.Controllers
 
                     }
                 }
-
-                ros.TeamRankingAverage = totalTemp;
+                ros.TeamRankingAverage += totalTemp;
                 ros.QBRankingAverage = qbTemp;
                 ros.RBRankingAverage = rbTemp;
                 ros.WRRankingAverage = wrTemp;
@@ -1020,71 +1065,201 @@ namespace RML.Controllers
 
         #endregion
 
-        public List<Rosters> FindTradeTargets(List<Rosters> rosters)
+        #region Draft Picks Functions
+        public void AddDraftPositionToRoster(List<Draft> draft, List<Rosters> rosters)
         {
-            var tempRoster = rosters.Find(x => x.SelectedRoster == 1);
+            List<string> startingDraftPicks = new List<string>();
 
-            List<string> tempTradeCandidates = new List<string>();
-
-            bool qbAdv;
-            bool rbAdv;
-            bool wrAdv;
-            bool teAdv;
-
-            foreach (var ros in rosters)
+            foreach (Rosters ros in rosters)
             {
+                startingDraftPicks.Add("2021 1st");
+                startingDraftPicks.Add("2021 2nd");
+                startingDraftPicks.Add("2021 3rd");
+                startingDraftPicks.Add("2021 4th");
+                startingDraftPicks.Add("2022 1st");
+                startingDraftPicks.Add("2022 2nd");
+                startingDraftPicks.Add("2022 3rd");
+                startingDraftPicks.Add("2022 4th");
 
-                if (ros.RosterID != tempRoster.RosterID)
-                {
-                    qbAdv = false;
-                    rbAdv = false;
-                    wrAdv = false;
-                    teAdv = false;
+                foreach (Draft d in draft)
+                    if (d.DraftOrder.Keys.Contains(ros.OwnerID))
+                        ros.DraftPosition = d.DraftOrder[ros.OwnerID];
 
-                    //if(ros.QBRankingAverage > tempRoster.QBRankingAverage || ros.RBRankingAverage > tempRoster.RBRankingAverage || ros.WRRankingAverage > tempRoster.WRRankingAverage || ros.TERankingAverage > tempRoster.TERankingAverage)
-                    if (ros.QBRankingAverage > tempRoster.QBRankingAverage)
-                        qbAdv = true;
-                    if (ros.RBRankingAverage > tempRoster.RBRankingAverage)
-                        rbAdv = true;
-                    if (ros.WRRankingAverage > tempRoster.WRRankingAverage)
-                        wrAdv = true;
-                    if (ros.TERankingAverage > tempRoster.TERankingAverage)
-                        teAdv = true;
-
-                    if (qbAdv && rbAdv && wrAdv && teAdv || !qbAdv && !rbAdv && !wrAdv && !teAdv)
-                    {
-                        continue;
-                    }
-
-                    if (qbAdv || rbAdv || wrAdv || teAdv)
-                    {
-                        tempTradeCandidates.Add(ros.DisplayName);
-                    }
-                }
+                ros.DraftPicks = startingDraftPicks;
+                startingDraftPicks = new List<string>();
             }
-            tempRoster.TradeCandidates = tempTradeCandidates;
+        }
+
+        public List<Rosters> AssignDraftPositionToPicks(List<Rosters> rosters)
+        {
+            double leagueSize = rosters.Count(); //12
+            double eml = 0.00D;
+            string tempPick = "";
+            foreach (Rosters ros in rosters)
+            {
+                for (int i = 0; i < ros.DraftPicks.Count(); i++)
+                {
+                    eml = ros.DraftPosition / leagueSize;
+                    tempPick = ros.DraftPicks[i];
+                    if (eml <= 0.34)
+                    {
+                        tempPick = tempPick.Insert(4, " Early");
+                    }
+                    if (eml >= 0.34 && eml <= 0.67)
+                    {
+                        tempPick = tempPick.Insert(4, " Mid");
+                    }
+                    if (eml >= 0.67)
+                    {
+                        tempPick = tempPick.Insert(4, " Late");
+                    }
+                    ros.DraftPicks[i] = tempPick;
+                    tempPick = "";
+                }
+
+            }
 
             return rosters;
         }
 
         public List<Rosters> TradedDraftPicks(List<Rosters> rosters, List<TradedPick> tp)
         {
-            /**TODO
-             * So TradedPick has Season Round Roster ID Previous Owner ID and Owner ID. 
-             * Add Wins and Losses to TradedPick or do a compare on wins and losses and assign an Early Middle Late as a string in Traded Pick
-             * If they traded a pick that they don't have check the rest of the picks for the owner ID?
-             * wins and losses are zero already but record has previous years WL record
-             * Maybe just ask them to import their draft ID?
-             * 
-             * JJJJJKKKK, Get all Drafts for League, get Draft ID, gives draft order and number of rounds
-             **/
+            Rosters originalOwnerRoster = new Rosters();
+            Rosters newOwnerRoster = new Rosters();
+            Rosters previousOwnerRoster = new Rosters();
+            Dictionary<string, string> listOfRemovedPicks = new Dictionary<string, string>();
+            int pickFound = 0;
 
+            foreach (var trade in tp)
+            {
+                if (trade.Season == "2021" || trade.Season == "2022")
+                {
+                    string tempPick = "";
 
+                    System.Diagnostics.Debug.WriteLine(trade.RosterIDOfCurrentOwner);
+                    System.Diagnostics.Debug.WriteLine(trade.RosterIDOriginalOwnerForDraftPosition);
+                    System.Diagnostics.Debug.WriteLine(trade.RosterIDOfPreviousOwner);
+                    System.Diagnostics.Debug.WriteLine(trade.Round);
+                    System.Diagnostics.Debug.WriteLine(trade.Season);
 
+                    originalOwnerRoster = rosters.FirstOrDefault(o => Int32.Parse(o.RosterID) == trade.RosterIDOriginalOwnerForDraftPosition);
+                    newOwnerRoster = rosters.FirstOrDefault(o => Int32.Parse(o.RosterID) == trade.RosterIDOfCurrentOwner);
+                    previousOwnerRoster = rosters.FirstOrDefault(o => Int32.Parse(o.RosterID) == trade.RosterIDOfPreviousOwner);
+
+                    tempPick = trade.Season + " " + trade.Round;
+                    if (trade.Round == 1)
+                        tempPick = tempPick + "st";
+                    else if(trade.Round == 2)
+                        tempPick = tempPick + "nd";
+                    else if (trade.Round == 3)
+                        tempPick = tempPick + "rd";
+                    else if (trade.Round == 4)
+                        tempPick = tempPick + "th";
+
+                    double leagueSize = rosters.Count(); //12
+                    double eml = 0.00D;
+                    eml = originalOwnerRoster.DraftPosition / leagueSize;
+                    if (eml <= 0.34)
+                    {
+                        tempPick = tempPick.Insert(4, " Early");
+                    }
+                    if (eml >= 0.34 && eml <= 0.67)
+                    {
+                        tempPick = tempPick.Insert(4, " Mid");
+                    }
+                    if (eml >= 0.67)
+                    {
+                        tempPick = tempPick.Insert(4, " Late");
+                    }
+
+                    foreach (var pick in previousOwnerRoster.DraftPicks)
+                    {
+                        if (pick == tempPick)
+                        {
+                            pickFound = 1;
+                        }
+                    }
+
+                    if(pickFound == 1)
+                    {
+                        //listOfRemovedPicks.Add(previousOwnerRoster.RosterID, tempPick);
+                        previousOwnerRoster.DraftPicks.Remove(tempPick);
+                        newOwnerRoster.DraftPicks.Add(tempPick);
+                    }
+
+                    newOwnerRoster = new Rosters();
+                    previousOwnerRoster = new Rosters();
+                    originalOwnerRoster = new Rosters();
+
+                }
+            }
             return rosters;
         }
 
+        public List<Rosters> GetTotalDraftCapital(List<Rosters> rosters, Dictionary<string, string> dpr)
+        {
+            int tempTotal = 0;
+            foreach(var ros in rosters)
+            {
+                foreach(var pick in ros.DraftPicks)
+                {
+                    tempTotal += Int32.Parse(dpr[pick]);
+                }
+                ros.TeamRankingAverage = ros.TeamRankingAverage + tempTotal;
+                ros.TotalDraftCapital = tempTotal;
+                tempTotal = 0;
+            }
+            return rosters;
+        }
+        #endregion
+
         #region COMMENTED OUT FUNCTIONS
+        //public List<Rosters> FindTradeTargets(List<Rosters> rosters)
+        //{
+        //    var tempRoster = rosters.Find(x => x.SelectedRoster == 1);
+
+        //    List<string> tempTradeCandidates = new List<string>();
+
+        //    bool qbAdv;
+        //    bool rbAdv;
+        //    bool wrAdv;
+        //    bool teAdv;
+
+        //    foreach (var ros in rosters)
+        //    {
+
+        //        if (ros.RosterID != tempRoster.RosterID)
+        //        {
+        //            qbAdv = false;
+        //            rbAdv = false;
+        //            wrAdv = false;
+        //            teAdv = false;
+
+        //            //if(ros.QBRankingAverage > tempRoster.QBRankingAverage || ros.RBRankingAverage > tempRoster.RBRankingAverage || ros.WRRankingAverage > tempRoster.WRRankingAverage || ros.TERankingAverage > tempRoster.TERankingAverage)
+        //            if (ros.QBRankingAverage > tempRoster.QBRankingAverage)
+        //                qbAdv = true;
+        //            if (ros.RBRankingAverage > tempRoster.RBRankingAverage)
+        //                rbAdv = true;
+        //            if (ros.WRRankingAverage > tempRoster.WRRankingAverage)
+        //                wrAdv = true;
+        //            if (ros.TERankingAverage > tempRoster.TERankingAverage)
+        //                teAdv = true;
+
+        //            if (qbAdv && rbAdv && wrAdv && teAdv || !qbAdv && !rbAdv && !wrAdv && !teAdv)
+        //            {
+        //                continue;
+        //            }
+
+        //            if (qbAdv || rbAdv || wrAdv || teAdv)
+        //            {
+        //                tempTradeCandidates.Add(ros.DisplayName);
+        //            }
+        //        }
+        //    }
+        //    tempRoster.TradeCandidates = tempTradeCandidates;
+
+        //    return rosters;
+        //}
 
         //public Dictionary<string, PlayerData> LoadRankings(Dictionary<string, PlayerData> players, List<KeepTradeCut> ktc)
         //{

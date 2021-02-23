@@ -16,13 +16,13 @@ namespace RML.Models
         public int Round { get; set; }
 
         [JsonProperty(PropertyName = "roster_id")]
-        public int RosterID { get; set; }
+        public int RosterIDOriginalOwnerForDraftPosition { get; set; }
 
         [JsonProperty(PropertyName = "previous_owner_id")]
-        public int PreviousOwnerID { get; set; }
+        public int RosterIDOfPreviousOwner { get; set; }
 
         [JsonProperty(PropertyName = "owner_id")]
-        public int OwnerID { get; set; }
+        public int RosterIDOfCurrentOwner { get; set; }
 
         public string Position {get; set;}
     }

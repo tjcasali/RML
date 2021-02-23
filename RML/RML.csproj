@@ -148,6 +148,8 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\Draft.cs" />
+    <Compile Include="Models\DraftPickRankings.cs" />
     <Compile Include="Models\ErrorViewModel.cs" />
     <Compile Include="Models\KeepTradeCut.cs" />
     <Compile Include="Models\Player.cs" />

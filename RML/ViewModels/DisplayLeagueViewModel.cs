@@ -10,9 +10,8 @@ namespace RML.ViewModels
     {
         public List<Rosters> Rosters { get; set; }
         public string LeagueID { get; set; }
-
-        public UserInfo UserInfo {get; set;}
-
+        public UserInfo UserInfo { get; set; }
         public string LastScrapeDate { get; set; }
+        public Dictionary<string, string> DraftPickRankings { get; set; }
     }
 }

@@ -29,8 +29,6 @@ namespace RML.Models
         //[JsonProperty(PropertyName = "losses")]
         public string Losses { get; set; }
 
-        public List<string> DraftPicks { get; set; }
-
         public string DisplayName { get; set; }
 
         public List<string> PlayerNames { get; set; }
@@ -73,6 +71,11 @@ namespace RML.Models
         public List<string> StartingPlayerList { get; set; }
 
         public List<string> StartingFlexList { get; set; }
+
+        public double DraftPosition { get; set; }
+        public List<string> DraftPicks { get; set; }
+
+        public int TotalDraftCapital { get; set; }
     }
 
     public class POR
