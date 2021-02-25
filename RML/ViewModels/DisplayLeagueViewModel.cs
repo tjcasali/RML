@@ -13,5 +13,7 @@ namespace RML.ViewModels
         public UserInfo UserInfo { get; set; }
         public string LastScrapeDate { get; set; }
         public Dictionary<string, string> DraftPickRankings { get; set; }
+
+        public List<TradedPick> TradedPicks { get; set; }
     }
 }

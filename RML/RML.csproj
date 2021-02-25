@@ -327,6 +327,7 @@
     <Content Include="Views\Sleeper\TeamBreakdown.cshtml" />
     <Content Include="Views\Sleeper\InvalidLeagueID.cshtml" />
     <Content Include="Views\Sleeper\DisplayStarting.cshtml" />
+    <Content Include="Views\Sleeper\AddDraftCapital.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

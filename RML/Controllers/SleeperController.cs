@@ -26,6 +26,7 @@ namespace RML.Controllers
         public string lastScrapeDate;
         public List<Draft> drafts = new List<Draft>();
         public Dictionary<string, string> draftPickRankings = new Dictionary<string, string>();
+        public int UserAddedPreviousDraft = 0;
 
         // GET: Sleeper
         public ActionResult Index()
@@ -38,7 +39,7 @@ namespace RML.Controllers
         //[Route("Sleeper/DisplayLeague/{leagueId}")]
         public async Task<ActionResult> DisplayLeague(string leagueID)
         {
-            if (leagueID != String.Empty)
+            if (leagueID != String.Empty && UserAddedPreviousDraft == 0)
             {
                 try
                 {
@@ -48,65 +49,34 @@ namespace RML.Controllers
                     playerList = GetPlayers();
                     tradedPicks = await GetTradedDraftPicks(leagueID);
                     drafts = await GetDraftOrder(leagueID);
-                }
-                catch
-                {
-                    return RedirectToAction("InvalidLeagueID");
-                }
-            }
-            else
-            {
-                return RedirectToAction("InvalidLeagueID");
-            }
+                    lastScrapeDate = GetPreviousScrapeDate(lastScrapeDate);
 
-            lastScrapeDate = GetPreviousScrapeDate(lastScrapeDate);
+                    //LoadSleeperPlayersTextFile();
 
-            //LoadSleeperPlayersTextFile();
+                    //TODO Put the if condition here so we don't even have to go into the scrape functions
+                    ScrapeRankings(lastScrapeDate);
+                    ScrapeSFRankings(lastScrapeDate);
 
+                    playerList = LoadRankings(playerList, keepTradeCutList, leagueInformation);
 
-            //TODO Put the if condition here so we don't even have to go into the scrape functions
-            ScrapeRankings(lastScrapeDate);
-            ScrapeSFRankings(lastScrapeDate);
+                    LinkUsersAndRosters(sleeperUsers, sleeperRosters);
 
-            LinkUsersAndRosters(sleeperUsers, sleeperRosters);
+                    AddDraftPositionToRoster(drafts, sleeperRosters);
+                    sleeperRosters = AssignDraftPositionToPicks(sleeperRosters);
+                    sleeperRosters = TradedDraftPicks(sleeperRosters, tradedPicks);
+                    sleeperRosters = GetTotalDraftCapital(sleeperRosters, draftPickRankings);
 
-            playerList = LoadRankings(playerList, keepTradeCutList, leagueInformation);
+                    sleeperRosters = AverageTeamRanking(sleeperRosters, playerList);
 
-            AddDraftPositionToRoster(drafts, sleeperRosters);
-            sleeperRosters = AssignDraftPositionToPicks(sleeperRosters);
-            sleeperRosters = TradedDraftPicks(sleeperRosters, tradedPicks);
-            sleeperRosters = GetTotalDraftCapital(sleeperRosters, draftPickRankings);
+                    AddPlayerNamesToRosters(sleeperRosters, playerList);
 
-            sleeperRosters = AverageTeamRanking(sleeperRosters, playerList);
+                    sleeperRosters = RankPositionGroups(sleeperRosters);
 
-            AddPlayerNamesToRosters(sleeperRosters, playerList);
+                    sleeperRosters = SortRostersByRanking(sleeperRosters);
 
-            sleeperRosters = RankPositionGroups(sleeperRosters);
+                    sleeperRosters = RankStartingLineups(sleeperRosters, leagueInformation);
 
-            sleeperRosters = SortRostersByRanking(sleeperRosters);
-
-            sleeperRosters = RankStartingLineups(sleeperRosters, leagueInformation);
-
-            OrderStartingLineupRanking(sleeperRosters);
-
-            var viewModel = new DisplayLeagueViewModel
-            {
-                Rosters = sleeperRosters,
-                UserInfo = leagueInformation,
-                LastScrapeDate = lastScrapeDate,
-                DraftPickRankings = draftPickRankings
-            };
-
-            return View(viewModel);
-        }
-
-        public async Task<ActionResult> AddPreviouslyTradedDraftPicks(string leagueID)
-        {
-            if (leagueID != String.Empty)
-            {
-                try
-                {
-                    tradedPicks = await GetPreviouslyTradedDraftPicks(leagueID, tradedPicks);
+                    OrderStartingLineupRanking(sleeperRosters);
                 }
                 catch
                 {
@@ -123,33 +93,38 @@ namespace RML.Controllers
                 Rosters = sleeperRosters,
                 UserInfo = leagueInformation,
                 LastScrapeDate = lastScrapeDate,
-                DraftPickRankings = draftPickRankings
-            };
-
-            return View("DisplayLeague", viewModel);
-        }
-        public ActionResult TeamBreakdown(string leagueID, string name)
-        {
-            foreach (var ros in sleeperRosters)
-            {
-                if (ros.DisplayName == name)
-                {
-                    ros.SelectedRoster = 1;
-                    continue;
-                }
-            }
-
-            //sleeperRosters = FindTradeTargets(sleeperRosters);
-
-            var viewModel = new TeamBreakdownViewModel
-            {
-                Rosters = sleeperRosters,
-                SelectedRosterVM = sleeperRosters.Find(x => x.SelectedRoster == 1),
-                LeagueID = leagueID
+                DraftPickRankings = draftPickRankings,
+                TradedPicks = tradedPicks
             };
 
             return View(viewModel);
         }
+
+        //public void AddPreviouslyTradedDraftPicks(string leagueID)
+        //{
+        //    DisplayLeague(leagueID);
+        //}
+
+        //public async Task<ActionResult> AddPreviouslyTradedDraftPicks(string leagueID)
+        //{
+        //    playerList = LoadRankings(playerList, keepTradeCutList, leagueInformation);
+
+        //    tradedPicks = await GetPreviouslyTradedDraftPicks(leagueID, tradedPicks);
+        //    sleeperRosters = TradedDraftPicks(sleeperRosters, tradedPicks);
+        //    sleeperRosters = GetTotalDraftCapital(sleeperRosters, draftPickRankings);
+        //    sleeperRosters = SortRostersByRanking(sleeperRosters);
+
+        //    var viewModel = new DisplayLeagueViewModel
+        //    {
+        //        Rosters = sleeperRosters,
+        //        UserInfo = leagueInformation,
+        //        LastScrapeDate = lastScrapeDate,
+        //        DraftPickRankings = draftPickRankings,
+        //        TradedPicks = tradedPicks
+        //    };
+
+        //    return View("DisplayLeague", viewModel);
+        //}
 
         public ActionResult InvalidLeagueID()
         {
@@ -1214,6 +1189,29 @@ namespace RML.Controllers
         #endregion
 
         #region COMMENTED OUT FUNCTIONS
+
+        //public ActionResult TeamBreakdown(string leagueID, string name)
+        //{
+        //    foreach (var ros in sleeperRosters)
+        //    {
+        //        if (ros.DisplayName == name)
+        //        {
+        //            ros.SelectedRoster = 1;
+        //            continue;
+        //        }
+        //    }
+
+        //    //sleeperRosters = FindTradeTargets(sleeperRosters);
+
+        //    var viewModel = new TeamBreakdownViewModel
+        //    {
+        //        Rosters = sleeperRosters,
+        //        SelectedRosterVM = sleeperRosters.Find(x => x.SelectedRoster == 1),
+        //        LeagueID = leagueID
+        //    };
+
+        //    return View(viewModel);
+        //}
         //public List<Rosters> FindTradeTargets(List<Rosters> rosters)
         //{
         //    var tempRoster = rosters.Find(x => x.SelectedRoster == 1);
