@@ -21,30 +21,16 @@
 
         <div class="littleGap"></div>
 
-        <div class="sleeperIDBiggerPadding">
-            <h1>Enter your Sleeper User Name.</h1><br />
-
-            @using (Html.BeginForm("SelectLeague", "Sleeper"))
-            {
-                @Html.TextBoxFor(m => m.UserName, new { @class = "sleeperIDField" })
-                <button type="submit" class="btn btn-info">Submit</button>
-            }
-        </div>
-
-        <div class="tinyGap"></div>
-        <div class="alignCenter">- OR -</div>
-        <div class="tinyGap"></div>
-
         <div class="sleeperID">
             <h1>Enter your Sleeper League ID.</h1><br />
 
             @using (Html.BeginForm("DisplayLeague", "Sleeper"))
             {
-                @Html.TextBoxFor(m => m.LeagueID, new { @class = "sleeperIDField" })
+                @Html.TextBoxFor(m => m.LeagueID)
                 <button type="submit" class="btn btn-info">Submit</button>
             }
-            <img alt="Sleeper ID" src="@Url.Content("~/Images/SleeperLeagueID.png")" class="hideIfSmol">
         </div>
+        <div class="bigGap"></div>
 
     </div>
 </body>

@@ -28,7 +28,17 @@ namespace RML.Models
 
         public int SUPERFLEXCount { get; set; }
 
+        public int RECFLEXCount { get; set; }
+
         public bool SuperFlex { get; set; }
         //public string UserID { get; set; }
+        
+        [JsonProperty(PropertyName = "previous_league_id")]
+        public string PreviousLeagueID { get; set; }
+
+        [JsonProperty(PropertyName = "draft_id")]
+        public string DraftID { get; set; }
+
+        public string UserName { get; set; }
     }
 }

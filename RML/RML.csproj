@@ -152,15 +152,18 @@
     <Compile Include="Models\DraftPickRankings.cs" />
     <Compile Include="Models\ErrorViewModel.cs" />
     <Compile Include="Models\KeepTradeCut.cs" />
+    <Compile Include="Models\League.cs" />
     <Compile Include="Models\Player.cs" />
     <Compile Include="Models\Players.cs" />
     <Compile Include="Models\Rosters.cs" />
     <Compile Include="Models\SleeperUsers.cs" />
     <Compile Include="Models\TradedPick.cs" />
     <Compile Include="Models\UserInfo.cs" />
+    <Compile Include="Models\Username.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModels\DisplayLeagueViewModel.cs" />
     <Compile Include="ViewModels\RostersViewModel.cs" />
+    <Compile Include="ViewModels\SelectLeagueViewModel.cs" />
     <Compile Include="ViewModels\TeamBreakdownViewModel.cs" />
     <Compile Include="ViewModels\UserInfoViewModel.cs" />
   </ItemGroup>
@@ -172,7 +175,6 @@
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Data\LastScrapeDate.txt" />
-    <Content Include="Data\RML.jpg" />
     <Content Include="favicongenerator.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -328,6 +330,8 @@
     <Content Include="Views\Sleeper\InvalidLeagueID.cshtml" />
     <Content Include="Views\Sleeper\DisplayStarting.cshtml" />
     <Content Include="Views\Sleeper\AddDraftCapital.cshtml" />
+    <Content Include="Views\Sleeper\SelectLeague.cshtml" />
+    <Content Include="Views\Sleeper\BadLeague.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

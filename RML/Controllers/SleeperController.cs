@@ -19,14 +19,17 @@ namespace RML.Controllers
     {
         public List<SleeperUsers> sleeperUsers = new List<SleeperUsers>();
         public static List<Rosters> sleeperRosters = new List<Rosters>();
+        public List<League> leagueList = new List<League>();
         public Dictionary<string, PlayerData> playerList = new Dictionary<string, PlayerData>();
         public List<KeepTradeCut> keepTradeCutList = new List<KeepTradeCut>();
         public UserInfo leagueInformation = new UserInfo();
         public List<TradedPick> tradedPicks = new List<TradedPick>();
         public string lastScrapeDate;
-        public List<Draft> drafts = new List<Draft>();
+        //public List<Draft> drafts = new List<Draft>();
+        public Draft draft = new Draft();
         public Dictionary<string, string> draftPickRankings = new Dictionary<string, string>();
-        public int UserAddedPreviousDraft = 0;
+        public Username currentUser = new Username();
+        public bool includeDraftCapital = true;
 
         // GET: Sleeper
         public ActionResult Index()
@@ -37,18 +40,20 @@ namespace RML.Controllers
         #region ActionResults
 
         //[Route("Sleeper/DisplayLeague/{leagueId}")]
-        public async Task<ActionResult> DisplayLeague(string leagueID)
+        public async Task<ActionResult> DisplayLeague(League league)
         {
-            if (leagueID != String.Empty && UserAddedPreviousDraft == 0)
+
+            //TODOO: Make new views, like no teams in league, league not supported etc. and add new try catches
+
+
+            if (league.LeagueID != null)
             {
                 try
                 {
-                    leagueInformation = await GetLeagueInformation(leagueID);
-                    sleeperUsers = await GetUsers(leagueID);
-                    sleeperRosters = await GetRosters(leagueID);
+                    leagueInformation = await GetLeagueInformation(league.LeagueID);
+                    sleeperUsers = await GetUsers(league.LeagueID);
+                    sleeperRosters = await GetRosters(league.LeagueID);
                     playerList = GetPlayers();
-                    tradedPicks = await GetTradedDraftPicks(leagueID);
-                    drafts = await GetDraftOrder(leagueID);
                     lastScrapeDate = GetPreviousScrapeDate(lastScrapeDate);
 
                     //LoadSleeperPlayersTextFile();
@@ -61,12 +66,36 @@ namespace RML.Controllers
 
                     LinkUsersAndRosters(sleeperUsers, sleeperRosters);
 
-                    AddDraftPositionToRoster(drafts, sleeperRosters);
-                    sleeperRosters = AssignDraftPositionToPicks(sleeperRosters);
-                    sleeperRosters = TradedDraftPicks(sleeperRosters, tradedPicks);
-                    sleeperRosters = GetTotalDraftCapital(sleeperRosters, draftPickRankings);
+                    if(leagueInformation.PreviousLeagueID != "")
+                    {
+                        try
+                        {
+                            draft = await GetDraftOrder(league.LeagueID);
+                            if (draft.DraftOrder != null)
+                            {
+                                tradedPicks = await GetTradedDraftPicks(leagueInformation);
+                                AddDraftPositionToRoster(draft, sleeperRosters);
+                                sleeperRosters = AssignDraftPositionToPicks(sleeperRosters);
+                                sleeperRosters = TradedDraftPicks(sleeperRosters, tradedPicks);
+                                sleeperRosters = GetTotalDraftCapital(sleeperRosters, draftPickRankings);
+                            }
+                            else
+                                includeDraftCapital = false;
+                        }
+                        catch
+                        {
+                            includeDraftCapital = false;
+                        }
+                    }
 
-                    sleeperRosters = AverageTeamRanking(sleeperRosters, playerList);
+                    try
+                    {
+                        sleeperRosters = AverageTeamRanking(sleeperRosters, playerList);
+                    }
+                    catch
+                    {
+                        return RedirectToAction("BadLeague");
+                    }
 
                     AddPlayerNamesToRosters(sleeperRosters, playerList);
 
@@ -94,39 +123,49 @@ namespace RML.Controllers
                 UserInfo = leagueInformation,
                 LastScrapeDate = lastScrapeDate,
                 DraftPickRankings = draftPickRankings,
-                TradedPicks = tradedPicks
+                TradedPicks = tradedPicks,
+                IncludeDraftCapital = includeDraftCapital
             };
 
             return View(viewModel);
         }
 
-        //public void AddPreviouslyTradedDraftPicks(string leagueID)
-        //{
-        //    DisplayLeague(leagueID);
-        //}
+        //[Route("Sleeper/DisplayLeague/{leagueId}")]
+        public async Task<ActionResult> SelectLeague(string userName)
+        {
 
-        //public async Task<ActionResult> AddPreviouslyTradedDraftPicks(string leagueID)
-        //{
-        //    playerList = LoadRankings(playerList, keepTradeCutList, leagueInformation);
+            if (userName != null)
+            {
+                try
+                {
+                    currentUser = await GetUserIDFromUsername(userName);
+                    string currentUserID = currentUser.UserID;
+                    leagueList = await GetAllLeaguesForUser(currentUserID);
+                }
+                catch
+                {
+                    return RedirectToAction("InvalidLeagueID");
+                }
+            }
+            else
+            {
+                return RedirectToAction("InvalidLeagueID");
+            }
 
-        //    tradedPicks = await GetPreviouslyTradedDraftPicks(leagueID, tradedPicks);
-        //    sleeperRosters = TradedDraftPicks(sleeperRosters, tradedPicks);
-        //    sleeperRosters = GetTotalDraftCapital(sleeperRosters, draftPickRankings);
-        //    sleeperRosters = SortRostersByRanking(sleeperRosters);
+            var viewModel = new SelectLeagueViewModel
+            {
+                LeagueList = leagueList
+            };
 
-        //    var viewModel = new DisplayLeagueViewModel
-        //    {
-        //        Rosters = sleeperRosters,
-        //        UserInfo = leagueInformation,
-        //        LastScrapeDate = lastScrapeDate,
-        //        DraftPickRankings = draftPickRankings,
-        //        TradedPicks = tradedPicks
-        //    };
-
-        //    return View("DisplayLeague", viewModel);
-        //}
+            return View(viewModel);
+        }
 
         public ActionResult InvalidLeagueID()
+        {
+            return View();
+        }
+
+        public ActionResult BadLeague()
         {
             return View();
         }
@@ -150,31 +189,43 @@ namespace RML.Controllers
                 if(position == "QB")
                 {
                     leagueInfo.QBCount++;
+                    continue;
                 }
                 if (position == "RB")
                 {
                     leagueInfo.RBCount++;
+                    continue;
                 }
                 if (position == "WR")
                 {
                     leagueInfo.WRCount++;
+                    continue;
                 }
                 if (position == "TE")
                 {
                     leagueInfo.TECount++;
+                    continue;
                 }
                 if (position == "FLEX")
                 {
                     leagueInfo.FLEXCount++;
+                    continue;
+                }
+                if (position == "REC_FLEX")
+                {
+                    leagueInfo.RECFLEXCount++;
+                    continue;
                 }
                 if (position == "SUPER_FLEX")
                 {
                     leagueInfo.SUPERFLEXCount++;
+                    continue;
                 }
-                if (position == "SUPER_FLEX" || leagueInfo.QBCount > 1)
-                {
-                    isSuper = true;
-                }
+            }
+
+            if (leagueInfo.LeagueRosterPositions.Contains("SUPER_FLEX") || leagueInfo.QBCount > 1)
+            {
+                isSuper = true;
             }
 
             leagueInfo.SuperFlex = isSuper;
@@ -198,6 +249,33 @@ namespace RML.Controllers
 
         }
 
+        public static async Task<Username> GetUserIDFromUsername(string username)
+        {
+            HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/user/" + username);
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            Username user = JsonConvert.DeserializeObject<Username>(responseBody);
+
+            await GetAllLeaguesForUser(user.UserID);
+
+            return user;
+
+        }
+
+        public static async Task<List<League>> GetAllLeaguesForUser(string userID)
+        {
+            HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/user/" + userID + "/leagues/nfl/2021");
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            List<League> leagues = JsonConvert.DeserializeObject<List<League>>(responseBody);
+
+            return leagues;
+        }
+
         public static async Task<List<Rosters>> GetRosters(string leagueID)
         {
 
@@ -211,10 +289,10 @@ namespace RML.Controllers
             return rosters;
         }
 
-        public static async Task<List<TradedPick>> GetTradedDraftPicks(string leagueID)
+        public static async Task<List<TradedPick>> GetTradedDraftPicks(UserInfo leagueInfo)
         {
             HttpClient client = new HttpClient();
-            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/traded_picks");
+            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/draft/" + leagueInfo.DraftID + "/traded_picks");
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
 
@@ -223,30 +301,14 @@ namespace RML.Controllers
             return tradedPicks;
         }
 
-        public static async Task<List<TradedPick>> GetPreviouslyTradedDraftPicks(string leagueID, List<TradedPick> tp)
-        {
-            HttpClient client = new HttpClient();
-            HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/traded_picks");
-            response.EnsureSuccessStatusCode();
-            string responseBody = await response.Content.ReadAsStringAsync();
-
-            List<TradedPick> tradedPicks = JsonConvert.DeserializeObject<List<TradedPick>>(responseBody);
-
-            foreach (var pick in tradedPicks)
-                tp.Add(pick);
-
-            return tp;
-        }
-
-        public static async Task<List<Draft>> GetDraftOrder(string leagueID)
+        public static async Task<Draft> GetDraftOrder(string leagueID)
         {
             HttpClient client = new HttpClient();
             HttpResponseMessage response = await client.GetAsync("https://api.sleeper.app/v1/league/" + leagueID + "/drafts");
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
-
-            List<Draft> draft = JsonConvert.DeserializeObject<List<Draft>>(responseBody);
-
+            List<Draft> drafts = JsonConvert.DeserializeObject<List<Draft>>(responseBody);
+            Draft draft = drafts.First();
             return draft;
         }
 
@@ -408,6 +470,10 @@ namespace RML.Controllers
                     {
                         PlayerData currentPlayer = new PlayerData();
                         currentPlayer = GetPlayerData(playerID, players);
+                        if(currentPlayer.Position == null)
+                        {
+                            break;
+                        }
                         if (currentPlayer.KeepTradeCutValue != "")
                         {
                             parseTemp = Convert.ToDouble(currentPlayer.KeepTradeCutValue);
@@ -493,6 +559,7 @@ namespace RML.Controllers
             }
             return null;
         }
+
         public string GetPreviousScrapeDate(string date)
         {
             string path = Server.MapPath("~/Data/LastScrapeDate.txt");
@@ -838,7 +905,6 @@ namespace RML.Controllers
             foreach (var ros in sortedRosters)
             {
                 count++;
-
                 ros.StartingTeamRank = count;
             }
 
@@ -853,7 +919,6 @@ namespace RML.Controllers
             double startingWRTotal = 0.0;
             double startingTETotal = 0.0;
             double startingFLEXTotal = 0.0;
-            double startingSUPERFLEXTotal = 0.0;
 
             List<string> skippedPlayerNames = new List<string>();
             List<string> startingPlayerNames = new List<string>();
@@ -952,12 +1017,32 @@ namespace RML.Controllers
                             startingFLEXTotal += player.Value.PORValue;
                         }
                     }
-                    else
+                    else if(leagueInfo.RECFLEXCount != 0)
+                    {
+                        if (skippedPlayerNames.Contains(player.Value.PORName) || player.Value.PORPosition == "QB" || player.Value.PORPosition == "RB")
+                            continue;
+                        
+                        skippedPlayerNames.Add(player.Value.PORName);
+                        flexPlayerNames.Add(player.Value.PORName);
+
+                        positionCounter++;
+                        if (positionCounter == leagueInfo.RECFLEXCount)
+                        {
+                            skippedPlayerNames.Add(player.Value.PORName);
+                            startingFLEXTotal += player.Value.PORValue;
+                            positionCounter = 0;
+                            break;
+                        }
+                        else
+                        {
+                            startingFLEXTotal += player.Value.PORValue;
+                        }
+                    }
+                    else if (leagueInfo.FLEXCount != 0)
                     {
                         if (skippedPlayerNames.Contains(player.Value.PORName) || player.Value.PORPosition == "QB")
-                        {
                             continue;
-                        }
+
                         skippedPlayerNames.Add(player.Value.PORName);
                         flexPlayerNames.Add(player.Value.PORName);
 
@@ -1041,7 +1126,7 @@ namespace RML.Controllers
         #endregion
 
         #region Draft Picks Functions
-        public void AddDraftPositionToRoster(List<Draft> draft, List<Rosters> rosters)
+        public void AddDraftPositionToRoster(Draft draft, List<Rosters> rosters)
         {
             List<string> startingDraftPicks = new List<string>();
 
@@ -1051,14 +1136,13 @@ namespace RML.Controllers
                 startingDraftPicks.Add("2021 2nd");
                 startingDraftPicks.Add("2021 3rd");
                 startingDraftPicks.Add("2021 4th");
-                startingDraftPicks.Add("2022 1st");
-                startingDraftPicks.Add("2022 2nd");
-                startingDraftPicks.Add("2022 3rd");
-                startingDraftPicks.Add("2022 4th");
+                //startingDraftPicks.Add("2022 1st");
+                //startingDraftPicks.Add("2022 2nd");
+                //startingDraftPicks.Add("2022 3rd");
+                //startingDraftPicks.Add("2022 4th");
 
-                foreach (Draft d in draft)
-                    if (d.DraftOrder.Keys.Contains(ros.OwnerID))
-                        ros.DraftPosition = d.DraftOrder[ros.OwnerID];
+                if (draft.DraftOrder.ContainsKey(ros.OwnerID))
+                    ros.DraftPosition = draft.DraftOrder[ros.OwnerID];
 
                 ros.DraftPicks = startingDraftPicks;
                 startingDraftPicks = new List<string>();
@@ -1102,20 +1186,16 @@ namespace RML.Controllers
             Rosters originalOwnerRoster = new Rosters();
             Rosters newOwnerRoster = new Rosters();
             Rosters previousOwnerRoster = new Rosters();
-            Dictionary<string, string> listOfRemovedPicks = new Dictionary<string, string>();
+            Rosters rosterOfRemovedPick = new Rosters();
+            List<KeyValuePair<string, string>> picksToBeRemoved = new List<KeyValuePair<string, string>>();
             int pickFound = 0;
 
             foreach (var trade in tp)
             {
-                if (trade.Season == "2021" || trade.Season == "2022")
+                //if (trade.Season == "2021" || trade.Season == "2022")
+                if (trade.Season == "2021")
                 {
                     string tempPick = "";
-
-                    System.Diagnostics.Debug.WriteLine(trade.RosterIDOfCurrentOwner);
-                    System.Diagnostics.Debug.WriteLine(trade.RosterIDOriginalOwnerForDraftPosition);
-                    System.Diagnostics.Debug.WriteLine(trade.RosterIDOfPreviousOwner);
-                    System.Diagnostics.Debug.WriteLine(trade.Round);
-                    System.Diagnostics.Debug.WriteLine(trade.Season);
 
                     originalOwnerRoster = rosters.FirstOrDefault(o => Int32.Parse(o.RosterID) == trade.RosterIDOriginalOwnerForDraftPosition);
                     newOwnerRoster = rosters.FirstOrDefault(o => Int32.Parse(o.RosterID) == trade.RosterIDOfCurrentOwner);
@@ -1147,19 +1227,28 @@ namespace RML.Controllers
                         tempPick = tempPick.Insert(4, " Late");
                     }
 
-                    foreach (var pick in previousOwnerRoster.DraftPicks)
+                    //foreach (var pick in previousOwnerRoster.DraftPicks)
+                    //    System.Diagnostics.Debug.WriteLine(pick);
+                    //foreach (var pick in originalOwnerRoster.DraftPicks)
+                    //    System.Diagnostics.Debug.WriteLine(pick);
+                    //foreach (var pick in newOwnerRoster.DraftPicks)
+                    //    System.Diagnostics.Debug.WriteLine(pick);
+
+                    foreach (var pick in originalOwnerRoster.DraftPicks)
                     {
                         if (pick == tempPick)
                         {
                             pickFound = 1;
+                            break;
                         }
                     }
 
                     if(pickFound == 1)
                     {
-                        //listOfRemovedPicks.Add(previousOwnerRoster.RosterID, tempPick);
-                        previousOwnerRoster.DraftPicks.Remove(tempPick);
+                        picksToBeRemoved.Add(new KeyValuePair<string, string>(originalOwnerRoster.RosterID, tempPick));
+                        //previousOwnerRoster.DraftPicks.Remove(tempPick);
                         newOwnerRoster.DraftPicks.Add(tempPick);
+                        pickFound = 0;
                     }
 
                     newOwnerRoster = new Rosters();
@@ -1168,6 +1257,18 @@ namespace RML.Controllers
 
                 }
             }
+
+            foreach (var pick in picksToBeRemoved)
+            {
+                rosterOfRemovedPick = new Rosters();
+                rosterOfRemovedPick = rosters.FirstOrDefault(o => o.RosterID == pick.Key);
+
+                if (rosterOfRemovedPick.DraftPicks.Contains(pick.Value))
+                {
+                    rosterOfRemovedPick.DraftPicks.Remove(pick.Value);
+                }
+            }
+
             return rosters;
         }
 

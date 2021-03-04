@@ -1,0 +1,19 @@
+﻿@model RML.ViewModels.SelectLeagueViewModel
+
+<link href="~/StyleSheet.css" rel="stylesheet" />
+<meta charset="UTF-8">
+
+<body class="leagueBody">
+    <div class="sleeperID">
+        <h1>Select a League</h1>
+
+        <div class="alignCenter">
+            @foreach (var league in Model.LeagueList)
+            {
+                <a href="@Url.Action("DisplayLeague", "Sleeper", new { LeagueID = league.LeagueID})">@league.LeagueName</a><br />
+            }
+        </div>
+    </div>
+
+</body>
+

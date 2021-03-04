@@ -9,11 +9,13 @@
 
 .infobox-child {
     color:white;
-    width: 95%;
     font-family: Arial;
     font-size: 18px;
-    padding: 40px 20px 20px 20px;
+    padding: 40px 30px 20px 30px;
     border-radius: 10px;
+    align-content:center;
+    text-align:center;
+    width:100%;
 }
 
 .infobox2-child {
@@ -30,12 +32,14 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-around;
+    width:100%;
+    left:0;
 }
 
 #roster {
     color: #FFFFFF;
     float: left;
-    padding: 10px;
+    padding: 10px 10px 20px 10px;
     background-color: #283245;
     width: 272px;
     margin-bottom: 10px;
@@ -101,7 +105,7 @@
 
 .leagueBody {
     background-color: #18202F;
-    width: 100vw;
+    width: 100%;
     display: block;
 }
 
@@ -141,6 +145,10 @@
     padding: 15px;
 }
 
+.tinyGap {
+    padding: 5px;
+}
+
 .alignCenter{
     align-content:center;
     text-align:center;
@@ -161,7 +169,19 @@ h6 {
 .sleeperID {
     background-color: #3A465B;
     padding-top: 50px;
-    padding-bottom: 50px;
+    padding-bottom: 15px;
+    left: 0;
+    right: 0;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+    font-family: Arial;
+}
+
+.sleeperIDBiggerPadding {
+    background-color: #3A465B;
+    padding-top: 50px;
+    padding-bottom: 35px;
     left: 0;
     right: 0;
     border-radius: 10px;
@@ -217,3 +237,31 @@ footer {
 h1{
     font-family:Arial;
 }
+
+h4{
+    font-size:32px;
+}
+
+body{
+    width:100vw;
+    height:100vh;
+    margin:0;
+    padding:0;
+}
+
+a{
+    font-size:18px;
+}
+
+a:hover {
+    color: white;
+}
+
+.subtitle{
+    font-size: 26px;
+}
+
+.biggerA{
+    font-size:26px;
+}
+
